@@ -1,0 +1,23 @@
+{
+  "name": "ast-diff",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "A tool for semantic comparison of changed source files",
+  "main": "app.js",
+  "repository": "git@github.com:atlantistechnology/ast-diff.git",
+  "author": "David Mertz <mertz@gnosis.cx>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "chalk": "^4",
+    "commander": "^9.4.1",
+    "conf": "^10.2.0",
+    "simple-git": "^3.14.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.24.0"
+  },
+  "bin": {
+    "ast-diff": "./index.cjs"
+  }
+}
