@@ -42,7 +42,7 @@ func ParseGitStatus(status []byte, semantic bool) {
 	lines := bytes.Split(status, []byte("\n"))
 	var section GitStatus = Preamble
 	header := color.New(color.FgWhite, color.Bold)
-	untracked := color.New(color.FgRed).Add(color.Underline)
+	untracked := color.New(color.FgCyan)
 	for i := 0; i < len(lines); i++ {
 		line := string(lines[i])
 		if strings.HasPrefix(line, "Changes to be committed") {
@@ -57,19 +57,20 @@ func ParseGitStatus(status []byte, semantic bool) {
 		}
 
 		if strings.HasPrefix(line, "\t") {
+            fstatus := strings.Replace(line, "\t", "  ", 1)
 			switch section {
 			case Staged:
-				color.Green(line)
+				color.Green(fstatus)
 				if semantic {
-					color.Cyan("... Actual AST comparison here ...")
+					color.Cyan("  ... Actual AST comparison here ...")
 				}
 			case Unstaged:
-				color.Red(line)
+				color.Red(fstatus)
 				if semantic {
-					color.Cyan("... Actual AST comparison here ...")
+					color.Cyan("  ... Actual AST comparison here ...")
 				}
 			case Untracked:
-				untracked.Println(line)
+				untracked.Println(fstatus)
 			}
 		}
 	}
