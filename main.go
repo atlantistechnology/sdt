@@ -18,6 +18,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"github.com/atlantistechnology/ast-diff/pkg/ruby"
 	"strings"
 )
 
@@ -29,6 +31,31 @@ const usage = `Usage of ast-dff:
   -h, --help     Display this help screen
 `
 
+func ASTCompare(line string) {
+	info := strings.TrimSpace(line)
+	status, filename := strings.SplitN(info, ":   ", 2)
+	ext := filepath.Ext(line)
+	diffColor = color.New(color.FgWhite)
+
+	if status == "modified" {
+		switch ext {
+		case ".rb":
+			diffColor.Println(ruby.Diff(filename))
+		case ".py":
+			// Something with `ast` module
+			diffColor.Println("| Comparison of Python ASTs")
+		case ".sql":
+			// Dunno, find a nice parser
+			diffColor.Println("| Comparison with SQL canonicalizer")
+		case ".js":
+			// Probably eslint parsing
+			diffColor.Println("| Comparison with JS syntax tree")
+		default:
+			diffColor.Println("| No available AST tool for this format")
+		}
+	}
+}
+
 type GitStatus int8
 
 const (
@@ -39,10 +66,14 @@ const (
 )
 
 func ParseGitStatus(status []byte, semantic bool) {
-	lines := bytes.Split(status, []byte("\n"))
 	var section GitStatus = Preamble
+	lines := bytes.Split(status, []byte("\n"))
+
 	header := color.New(color.FgWhite, color.Bold)
+	staged := color.New(color.FgGreen)
+	unstaged := color.New(color.FgRed)
 	untracked := color.New(color.FgCyan)
+
 	for i := 0; i < len(lines); i++ {
 		line := string(lines[i])
 		if strings.HasPrefix(line, "Changes to be committed") {
@@ -57,17 +88,17 @@ func ParseGitStatus(status []byte, semantic bool) {
 		}
 
 		if strings.HasPrefix(line, "\t") {
-            fstatus := strings.Replace(line, "\t", "  ", 1)
+			fstatus := strings.Replace(line, "\t", "  ", 1)
 			switch section {
 			case Staged:
-				color.Green(fstatus)
+				staged.Println(fstatus)
 				if semantic {
-					color.Cyan("  ... Actual AST comparison here ...")
+					ASTCompare(line)
 				}
 			case Unstaged:
-				color.Red(fstatus)
+				unstagedPrintln(fstatus)
 				if semantic {
-					color.Cyan("  ... Actual AST comparison here ...")
+					ASTCompare(line)
 				}
 			case Untracked:
 				untracked.Println(fstatus)
