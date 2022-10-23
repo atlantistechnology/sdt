@@ -15,7 +15,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/atlantistechnology/ast-diff/pkg/ruby"
-	"github.com/atlantistechnology/ast-diff/pkg/utils"
 	"github.com/fatih/color"
 	"log"
 	"os"
@@ -23,6 +22,14 @@ import (
 	"path/filepath"
 	"strings"
 )
+
+type Options struct {
+	status    bool
+	semantic  bool
+	glob      string
+	verbose   bool
+	parsetree bool
+}
 
 const usage = `Usage of ast-dff:
   -s, --status     List all analyzable files modified since last git commit
@@ -33,7 +40,7 @@ const usage = `Usage of ast-dff:
   -h, --help       Display this help screen
 `
 
-func ASTCompare(line string, options utils.Options) {
+func ASTCompare(line string, options Options) {
 	info := strings.TrimSpace(line)
 	fileLine := strings.SplitN(info, ":   ", 2)
 	status := fileLine[0]
@@ -44,7 +51,7 @@ func ASTCompare(line string, options utils.Options) {
 	if status == "modified" {
 		switch ext {
 		case ".rb":
-			diffColor.Println(ruby.Diff(filename, options))
+			diffColor.Println(ruby.Diff(filename, options.semantic, options.parsetree))
 		case ".py":
 			// Something with `ast` module
 			diffColor.Println("| Comparison of Python ASTs")
@@ -69,7 +76,7 @@ const (
 	Untracked
 )
 
-func ParseGitStatus(status []byte, options utils.Options) {
+func ParseGitStatus(status []byte, options Options) {
 	var section GitStatus = Preamble
 	lines := bytes.Split(status, []byte("\n"))
 
@@ -135,7 +142,13 @@ func main() {
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 
-	options = utils.Options{status, semantic, glob, verbose, parsetree}
+	options := Options{
+		status:    status,
+		semantic:  semantic,
+		glob:      glob,
+		verbose:   verbose,
+		parsetree: parsetree,
+	}
 
 	var out []byte
 	var err error

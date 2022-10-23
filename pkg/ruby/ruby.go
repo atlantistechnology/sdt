@@ -3,7 +3,7 @@ package ruby
 import (
 	"bytes"
 	"fmt"
-	"github.com/atlantistechnology/ast-diff/pkg/utils"
+	//"github.com/atlantistechnology/ast-diff/pkg/utils"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"io/ioutil"
 	"log"
@@ -23,12 +23,7 @@ func simplifyParseTree(parseTree string) string {
 	return mod3
 }
 
-func linesForStartCount(parseTree []string) []int {
-	var lineNums []int
-	return lineNums
-}
-
-func Diff(filename string, options utils.Options) string {
+func Diff(filename string, semantic bool, parsetree bool) string {
 	var currentTree []byte
 	var head []byte
 	var headTree []byte
