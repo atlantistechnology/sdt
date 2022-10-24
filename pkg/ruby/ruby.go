@@ -3,7 +3,7 @@ package ruby
 import (
 	"bytes"
 	"fmt"
-	//"github.com/atlantistechnology/ast-diff/pkg/utils"
+	"github.com/atlantistechnology/ast-diff/pkg/utils"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"io/ioutil"
 	"log"
@@ -62,47 +62,68 @@ func Diff(filename string, semantic bool, parsetree bool) string {
 	// Perform the diff between the versions
 	dmp := diffmatchpatch.New()
 	diffs := dmp.DiffMain(headTreeString, currentTreeString, false)
-	patch := dmp.PatchToText(dmp.PatchMake(diffs))
 
-	// Only interested in line offsets of the change in parse tree
-	reFromTo := regexp.MustCompile(`(?m)^[^@].*$[\r\n]*`)
-	ranges := reFromTo.ReplaceAllString(patch, "")
-	rangeLines := strings.Split(ranges, "\n")
-	_ = rangeLines
+    if parsetree {
+        return dmp.DiffPrettyText(diffs)
+    }
 
-	/*
-		var oldStart int
-		var oldCount int
-		var newStart int
-		var newCount int
-		var n int
-		for i := 0; i < len(rangeLines); i++ {
-			n, err = fmt.Sscanf(rangeLines[i],
-				"@@ -%d,%d +%d,%d @@",
-				&oldStart, &oldCount, &newStart, &newCount)
-			if n == 4 {
-				fmt.Fprintf(os.Stderr,
-					"Start %d Count %d, Start %d Count %d (matches %d)\n",
-					oldStart, oldCount, newStart, newCount, n)
-				if oldStart+oldCount < len(headTreeString) {
-					fmt.Println(headTreeString[oldStart : oldStart+oldCount])
-				}
-				fmt.Println("--- Old ^^ --- New vvv ---")
-				if newStart+newCount < len(currentTreeString) {
-					fmt.Println(currentTreeString[newStart : newStart+newCount])
-				}
-			}
-		}
-	*/
+    if semantic {
+	    patch := dmp.PatchToText(dmp.PatchMake(diffs))
 
-	linesHeadTree := bytes.Split(headTree, []byte("\n"))
-	linesCurrentTree := bytes.Split(currentTree, []byte("\n"))
-	_ = linesHeadTree
-	_ = linesCurrentTree
+        // Only interested in line offsets of the change in parse tree
+        reFromTo := regexp.MustCompile(`(?m)^[^@].*$[\r\n]*`)
+        ranges := reFromTo.ReplaceAllString(patch, "")
+        rangeLines := strings.Split(ranges, "\n")
 
-	if len(ranges) > 0 {
-		return ranges
-	} else {
-		return "| No semantic differences detected"
-	}
+        var oldStart uint32
+        var oldCount uint32
+        var newStart uint32
+        var newCount uint32
+        var n int
+        
+        offsets := utils.MakeOffsetsFromString(headTreeString)
+
+        for i := 0; i < len(rangeLines); i++ {
+            n, err = fmt.Sscanf(rangeLines[i],
+                "@@ -%d,%d +%d,%d @@",
+                &oldStart, &oldCount, &newStart, &newCount,
+            )
+            parseTreeLine := utils.LineAtPosition(offsets, oldStart)
+            fmt.Println("(%d) Line of parse tree: %s", n, parseTreeLine)
+        }
+
+
+        /*
+        for i := 0; i < len(rangeLines); i++ {
+            n, err = fmt.Sscanf(rangeLines[i],
+                "@@ -%d,%d +%d,%d @@",
+                &oldStart, &oldCount, &newStart, &newCount)
+            if n == 4 {
+                fmt.Fprintf(os.Stderr,
+                    "Start %d Count %d, Start %d Count %d (matches %d)\n",
+                    oldStart, oldCount, newStart, newCount, n)
+                if oldStart+oldCount < len(headTreeString) {
+                    fmt.Println(headTreeString[oldStart : oldStart+oldCount])
+                }
+                fmt.Println("--- Old ^^ --- New vvv ---")
+                if newStart+newCount < len(currentTreeString) {
+                    fmt.Println(currentTreeString[newStart : newStart+newCount])
+                }
+            }
+        }
+        */
+
+        linesHeadTree := bytes.Split(headTree, []byte("\n"))
+        linesCurrentTree := bytes.Split(currentTree, []byte("\n"))
+        _ = linesHeadTree
+        _ = linesCurrentTree
+
+        if len(ranges) > 0 {
+            return ranges
+        } else {
+            return "| No semantic differences detected"
+        }
+    }
+
+    return "| No diff type specified"
 }
