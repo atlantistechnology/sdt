@@ -82,5 +82,4 @@ func TestLineAtPosition(t *testing.T) {
 				offset, lineNo, linesWant[i])
 		}
 	}
-
 }
