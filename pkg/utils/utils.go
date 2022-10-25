@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"golang.org/x/exp/constraints"
 	"strings"
 )
 
@@ -54,4 +55,18 @@ func LineAtPosition(records []lineOffset, pos uint32) int {
 		}
 	}
 	return -1
+}
+
+func Min[T constraints.Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func Max[T constraints.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
 }
