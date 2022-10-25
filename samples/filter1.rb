@@ -6,4 +6,3 @@ def mod5?(items)
 end
 
 puts mod5? 1..100
-

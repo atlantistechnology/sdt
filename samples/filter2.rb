@@ -5,4 +5,3 @@ end
 
 puts mod5? 1..100
 puts mod5? 1..50
-
