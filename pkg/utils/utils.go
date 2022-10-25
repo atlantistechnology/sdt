@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"golang.org/x/exp/constraints"
+	"regexp"
 	"strings"
 )
 
@@ -69,4 +70,15 @@ func Max[T constraints.Ordered](a, b T) T {
 		return a
 	}
 	return b
+}
+
+func BufferToDiff(buff bytes.Buffer, colorLeft bool) string {
+	ret := buff.String()
+	rePrepend := regexp.MustCompile(`(?m)^`)
+    if colorLeft {
+    	ret = rePrepend.ReplaceAllString(ret, "\x1b[33m|\x1b[0m ")
+    } else {
+    	ret = rePrepend.ReplaceAllString(ret, "| ")
+    }
+	return ret
 }
