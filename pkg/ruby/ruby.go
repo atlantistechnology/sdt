@@ -72,7 +72,7 @@ func semanticChanges(
 	if err != nil {
 		log.Fatal(err)
 	}
-    fmt.Println(gitDiff)
+    _ = gitDiff
 
 	// Determine the changes to the respective parse trees
 	patch := dmp.PatchToText(dmp.PatchMake(diffs))
