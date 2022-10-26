@@ -75,10 +75,10 @@ func Max[T constraints.Ordered](a, b T) T {
 func BufferToDiff(buff bytes.Buffer, colorLeft bool) string {
 	ret := buff.String()
 	rePrepend := regexp.MustCompile(`(?m)^`)
-    if colorLeft {
-    	ret = rePrepend.ReplaceAllString(ret, "\x1b[33m|\x1b[0m ")
-    } else {
-    	ret = rePrepend.ReplaceAllString(ret, "| ")
-    }
+	if colorLeft {
+		ret = rePrepend.ReplaceAllString(ret, "\x1b[33m|\x1b[0m ")
+	} else {
+		ret = rePrepend.ReplaceAllString(ret, "| ")
+	}
 	return ret
 }

@@ -14,22 +14,39 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"github.com/atlantistechnology/ast-diff/pkg/ruby"
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	//"reflect"
+	//"sort"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"github.com/atlantistechnology/ast-diff/pkg/ruby"
+	"github.com/fatih/color"
 )
 
-type Options struct {
-	status    bool
-	semantic  bool
-	glob      string
-	verbose   bool
-	parsetree bool
-}
+type (
+	Options struct {
+		status    bool
+		semantic  bool
+		glob      string
+		verbose   bool
+		parsetree bool
+	}
+
+	Config struct {
+		description string
+		commands    map[string]Command
+		glob        string
+	}
+
+	Command struct {
+		executable string
+		switches   []string
+	}
+)
 
 const usage = `Usage of ast-dff:
   -s, --status     List all analyzable files modified since last git commit
@@ -56,11 +73,14 @@ func ASTCompare(line string, options Options) {
 			// Something with `ast` module
 			diffColor.Println("| Comparison of Python ASTs")
 		case ".sql":
-			// Dunno, find a nice parser
+			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
 			diffColor.Println("| Comparison with SQL canonicalizer")
 		case ".js":
 			// Probably eslint parsing
 			diffColor.Println("| Comparison with JS syntax tree")
+		case ".go":
+			// TODO: Need to investigate AST tools
+			diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
 		default:
 			diffColor.Println("| No available semantic analyzer for this format")
 		}
@@ -119,6 +139,7 @@ func ParseGitStatus(status []byte, options Options) {
 }
 
 func main() {
+	// Parse flags and switches provided on command line
 	var status bool
 	flag.BoolVar(&status, "status", false, "Modified since last git commit")
 	flag.BoolVar(&status, "s", false, "Modified since last git commit")
@@ -150,8 +171,17 @@ func main() {
 		parsetree: parsetree,
 	}
 
+	// Read the configuration file if it is present
 	var out []byte
 	var err error
+
+	configFile := fmt.Sprintf("%s/.ast-diff.toml", os.Getenv("HOME"))
+	var config Config
+	_, err = toml.DecodeFile(configFile, &config)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+    }
+
 	if status || semantic || parsetree {
 		cmd := exec.Command("git", "status")
 		out, err = cmd.Output()
@@ -166,5 +196,47 @@ func main() {
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
 		fmt.Fprintf(os.Stderr, "glob: %s\n", glob)
+
+		// TODO: placeholder to look at how to use TOML config
+
+
+		
+		for _, c := range config.commands {
+			fmt.Printf("%#v\n", c.executable)
+		}
+		fmt.Println(config)
+
+
+		/*
+		indent := strings.Repeat(" ", 14)
+
+		fmt.Print("Decoded\n")
+		typ, val := reflect.TypeOf(config), reflect.ValueOf(config)
+		for i := 0; i < typ.NumField(); i++ {
+			indent := indent
+			if i == 0 {
+				indent = strings.Repeat(" ", 7)
+			}
+			_ = indent
+			fmt.Println(typ.Field(i).Name, val)
+			//fmt.Printf("%s%-11s → %v\n", indent, typ.Field(i).Name, val.Field(i).Interface())
+		}
+		for k, v := range config {
+			fmt.Println(k, v)
+		}
+		
+		fmt.Print("\nKeys")
+		keys := meta.Keys()
+		sort.Slice(keys, func(i, j int) bool { return keys[i].String() < keys[j].String() })
+		for i, k := range keys {
+			indent := indent
+			if i == 0 {
+				indent = strings.Repeat(" ", 10)
+			}
+			fmt.Printf("%s%-10s %s\n", indent, meta.Type(k...), k)
+		}
+
+		//keys = meta.Undecoded()
+		*/
 	}
 }

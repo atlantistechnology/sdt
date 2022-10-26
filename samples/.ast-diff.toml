@@ -1,0 +1,23 @@
+# A general description for this configuration
+Description = "A test configuration, mostly to exhibit the TOML format"
+
+# The default GLOB pattern to use in limiting files compared
+Glob = "*"
+
+[Commands.sql]
+    # Probably any "canonicalizer" will produce OK results
+    executable = "/usr/bin/sqlformat"
+    switches = [
+        "--reindent_aligned",
+        "--identifiers=lower",
+        "--strip-comments",
+        "--keywords=upper",
+    ]    
+
+[Commands.ruby]
+    # Might choose version not (first) on PATH, e.g.:
+    # executable = /usr/local/bin/ruby2.7
+    executable = "ruby"
+    switches = [
+        "--dump=parsetree",
+    ]
