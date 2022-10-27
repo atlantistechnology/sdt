@@ -18,41 +18,25 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	//"reflect"
-	//"sort"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/BurntSushi/toml"
 	"github.com/atlantistechnology/ast-diff/pkg/ruby"
-	"github.com/fatih/color"
+	"github.com/atlantistechnology/ast-diff/pkg/sql"
+	"github.com/atlantistechnology/ast-diff/pkg/types"
 )
 
-type (
-	Options struct {
-		status    bool
-		semantic  bool
-		glob      string
-		verbose   bool
-		parsetree bool
-	}
-
-	Config struct {
-		description string
-		commands    map[string]Command
-		glob        string
-	}
-
-	Command struct {
-		executable string
-		switches   []string
-	}
-)
+// Types used in this file
+Options := types.Options
+Config := types.Config
+Command := types.Command
 
 const usage = `Usage of ast-dff:
   -s, --status     List all analyzable files modified since last git commit
   -l, --semantic   List semantically meaningful changes since last git commit
   -g, --glob       Limit compared files by a glob pattern
-  -p, --parsetree  Full syntax tree differences
+  -p, --parsetree  Full syntax tree differences (where applicable)
   -v, --verbose    Show verbose output on STDERR
   -h, --help       Display this help screen
 `
@@ -139,6 +123,25 @@ func ParseGitStatus(status []byte, options Options) {
 }
 
 func main() {
+	// Configure default tools that might be overrridden by the TOML config
+	pythonCmd := Command{
+		Executable: "python",
+		Switches:   []string{"-m", "ast", "-a"},
+	}
+	rubyCmd := Command{
+		Executable: "ruby",
+		Switches:   []string{"--dump=parsetree"},
+	}
+	sqlCmd := Command{
+		Executable: "sqlformat",
+		Switches: []string{
+			"--reindent_aligned",
+			"--identifiers=lower",
+			"--strip-comments",
+			"--keywords=upper",
+		},
+	}
+
 	// Parse flags and switches provided on command line
 	var status bool
 	flag.BoolVar(&status, "status", false, "Modified since last git commit")
@@ -149,8 +152,8 @@ func main() {
 	flag.BoolVar(&semantic, "l", false, "Semantically meaningful changes")
 
 	var glob string
-	flag.StringVar(&glob, "glob", "*", "Limit compared files by a glob pattern")
-	flag.StringVar(&glob, "g", "*", "Limit compared files by glob (short flag)")
+	flag.StringVar(&glob, "glob", "*.*", "Limit compared files by a glob pattern")
+	flag.StringVar(&glob, "g", "*.*", "Limit compared files by glob (short flag)")
 
 	var parsetree bool
 	flag.BoolVar(&parsetree, "parsetree", false, "Full syntax tree differences")
@@ -180,7 +183,20 @@ func main() {
 	_, err = toml.DecodeFile(configFile, &config)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-    }
+	} else {
+		if config.Glob != "" {
+			glob = config.Glob
+		}
+		if userpython, found := config.Commands["python"]; found {
+			pythonCmd = userpython
+		}
+		if userruby, found := config.Commands["ruby"]; found {
+			rubyCmd = userruby
+		}
+		if usersql, found := config.Commands["sql"]; found {
+			sqlCmd = usersql
+		}
+	}
 
 	if status || semantic || parsetree {
 		cmd := exec.Command("git", "status")
@@ -192,51 +208,13 @@ func main() {
 	}
 
 	if verbose {
+		fmt.Fprintf(os.Stderr, "Description: %s\n", config.Description)
 		fmt.Fprintf(os.Stderr, "status: %t\n", status)
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
 		fmt.Fprintf(os.Stderr, "glob: %s\n", glob)
-
-		// TODO: placeholder to look at how to use TOML config
-
-
-		
-		for _, c := range config.commands {
-			fmt.Printf("%#v\n", c.executable)
-		}
-		fmt.Println(config)
-
-
-		/*
-		indent := strings.Repeat(" ", 14)
-
-		fmt.Print("Decoded\n")
-		typ, val := reflect.TypeOf(config), reflect.ValueOf(config)
-		for i := 0; i < typ.NumField(); i++ {
-			indent := indent
-			if i == 0 {
-				indent = strings.Repeat(" ", 7)
-			}
-			_ = indent
-			fmt.Println(typ.Field(i).Name, val)
-			//fmt.Printf("%s%-11s → %v\n", indent, typ.Field(i).Name, val.Field(i).Interface())
-		}
-		for k, v := range config {
-			fmt.Println(k, v)
-		}
-		
-		fmt.Print("\nKeys")
-		keys := meta.Keys()
-		sort.Slice(keys, func(i, j int) bool { return keys[i].String() < keys[j].String() })
-		for i, k := range keys {
-			indent := indent
-			if i == 0 {
-				indent = strings.Repeat(" ", 10)
-			}
-			fmt.Printf("%s%-10s %s\n", indent, meta.Type(k...), k)
-		}
-
-		//keys = meta.Undecoded()
-		*/
+		fmt.Fprintf(os.Stderr, "python: %s %s\n", pythonCmd.Executable, pythonCmd.Switches)
+		fmt.Fprintf(os.Stderr, "ruby: %s %s\n", rubyCmd.Executable, rubyCmd.Switches)
+		fmt.Fprintf(os.Stderr, "sql: %s %s\n", sqlCmd.Executable, sqlCmd.Switches)
 	}
 }

@@ -1,10 +1,10 @@
 # A general description for this configuration
-Description = "A test configuration, mostly to exhibit the TOML format"
+description = "A test configuration, mostly to exhibit the TOML format"
 
 # The default GLOB pattern to use in limiting files compared
-Glob = "*"
+glob = "*"
 
-[Commands.sql]
+[commands.sql]
     # Probably any "canonicalizer" will produce OK results
     executable = "/usr/bin/sqlformat"
     switches = [
@@ -14,7 +14,7 @@ Glob = "*"
         "--keywords=upper",
     ]    
 
-[Commands.ruby]
+[commands.ruby]
     # Might choose version not (first) on PATH, e.g.:
     # executable = /usr/local/bin/ruby2.7
     executable = "ruby"
