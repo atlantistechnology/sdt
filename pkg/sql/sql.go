@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+    "regexp"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 
@@ -19,23 +20,29 @@ func colorDiff(
 	dmp *diffmatchpatch.DiffMatchPatch,
 	diffs []diffmatchpatch.Diff) string {
 	var buff bytes.Buffer
+    // Tool `sqlformat` doesn't normalize whitespace completely
+    reWhiteSpace := regexp.MustCompile("^[\n\r\t ]+$")
 
 	_, _ = buff.WriteString(
 		"\x1b[33mComparison of canonicalized SQL (HEAD -> Current)\x1b[0m\n",
 	)
 
 	changed := false
-	for _, diff := range diffs {
+	for n, diff := range diffs {
 		text := diff.Text
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			changed = true
+            if !reWhiteSpace.MatchString(text) {
+    			changed = true
+            }
 			_, _ = buff.WriteString("\x1b[32m")
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffDelete:
-			changed = true
+            if !reWhiteSpace.MatchString(text) {
+    			changed = true
+            }
 			_, _ = buff.WriteString("\x1b[31m")
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
@@ -88,8 +95,11 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	// Perform the diff between the versions
+    // Our canonicalizer isn't always consistent with trailing spaces
+    a := string(headCanonical)
+    b := string(currentCanonical)
 	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(string(headCanonical), string(currentCanonical), false)
+	diffs := dmp.DiffMain(a, b, false)
 
 	if options.Parsetree {
 		return "| SQL comparison uses canonicalization not AST analysis"
