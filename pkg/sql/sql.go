@@ -28,7 +28,7 @@ func colorDiff(
 	)
 
 	changed := false
-	for n, diff := range diffs {
+	for _, diff := range diffs {
 		text := diff.Text
 
 		switch diff.Type {
