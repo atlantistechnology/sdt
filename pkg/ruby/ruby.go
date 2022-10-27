@@ -3,15 +3,18 @@ package ruby
 import (
 	"bytes"
 	"fmt"
-	"github.com/atlantistechnology/ast-diff/pkg/utils"
-	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/sergi/go-diff/diffmatchpatch"
+
+	"github.com/atlantistechnology/ast-diff/pkg/types"
+	"github.com/atlantistechnology/ast-diff/pkg/utils"
 )
 
 func simplifyParseTree(parseTree string) string {
@@ -33,8 +36,7 @@ func colorDiff(
 
 	_, _ = buff.WriteString("Comparison of parse trees (HEAD -> Current)\n")
 
-	for n, diff := range diffs {
-		_ = n
+	for _, diff := range diffs {
 		text := diff.Text
 		text = reComment.ReplaceAllString(text, "")
 		text = reSimpleTree.ReplaceAllString(text, "  ")
@@ -193,15 +195,16 @@ func semanticChanges(
 	}
 }
 
-func Diff(filename string, semantic bool, parsetree bool) string {
+func Diff(filename string, options types.Options, config types.Config) string {
 	var currentTree []byte
 	var head []byte
 	var headTree []byte
 	var err error
-	rubyCmd := "ruby" // TODO: Determine executable in more dynamic way
+	rubyCmd := config.Commands["ruby"].Executable
+	switches := append(config.Commands["ruby"].Switches, filename)
 
 	// Get the AST for the current version of the file
-	cmdCurrentTree := exec.Command(rubyCmd, "--dump=parsetree", filename)
+	cmdCurrentTree := exec.Command(rubyCmd, switches...)
 	currentTree, err = cmdCurrentTree.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -222,7 +225,8 @@ func Diff(filename string, semantic bool, parsetree bool) string {
 	defer os.Remove(tmpfile.Name()) // clean up
 
 	// Get the AST for the HEAD version of the file
-	cmdHeadTree := exec.Command(rubyCmd, "--dump=parsetree", tmpfile.Name())
+	switches = append(config.Commands["ruby"].Switches, tmpfile.Name())
+	cmdHeadTree := exec.Command(rubyCmd, switches...)
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -236,11 +240,11 @@ func Diff(filename string, semantic bool, parsetree bool) string {
 	dmp := diffmatchpatch.New()
 	diffs := dmp.DiffMain(headTreeString, currentTreeString, false)
 
-	if parsetree {
+	if options.Parsetree {
 		return colorDiff(dmp, diffs)
 	}
 
-	if semantic {
+	if options.Semantic {
 		return semanticChanges(dmp, diffs, filename, headTree, headTreeString)
 	}
 
