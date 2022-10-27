@@ -3,11 +3,11 @@ package types
 // Structs to hold options and configurations
 type (
 	Options struct {
-		status    bool
-		semantic  bool
-		glob      string
-		verbose   bool
-		parsetree bool
+		Status    bool
+		Semantic  bool
+		Glob      string
+		Verbose   bool
+		Parsetree bool
 	}
 
 	Config struct {

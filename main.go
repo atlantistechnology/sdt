@@ -27,11 +27,6 @@ import (
 	"github.com/atlantistechnology/ast-diff/pkg/types"
 )
 
-// Types used in this file
-Options := types.Options
-Config := types.Config
-Command := types.Command
-
 const usage = `Usage of ast-dff:
   -s, --status     List all analyzable files modified since last git commit
   -l, --semantic   List semantically meaningful changes since last git commit
@@ -41,7 +36,7 @@ const usage = `Usage of ast-dff:
   -h, --help       Display this help screen
 `
 
-func ASTCompare(line string, options Options) {
+func ASTCompare(line string, options types.Options) {
 	info := strings.TrimSpace(line)
 	fileLine := strings.SplitN(info, ":   ", 2)
 	status := fileLine[0]
@@ -52,13 +47,13 @@ func ASTCompare(line string, options Options) {
 	if status == "modified" {
 		switch ext {
 		case ".rb":
-			diffColor.Println(ruby.Diff(filename, options.semantic, options.parsetree))
+			diffColor.Println(ruby.Diff(filename, options.Semantic, options.Parsetree))
 		case ".py":
 			// Something with `ast` module
 			diffColor.Println("| Comparison of Python ASTs")
 		case ".sql":
 			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
-			diffColor.Println("| Comparison with SQL canonicalizer")
+			diffColor.Println(sql.Diff(filename, options.Semantic, options.Parsetree))
 		case ".js":
 			// Probably eslint parsing
 			diffColor.Println("| Comparison with JS syntax tree")
@@ -80,7 +75,7 @@ const (
 	Untracked
 )
 
-func ParseGitStatus(status []byte, options Options) {
+func ParseGitStatus(status []byte, options types.Options) {
 	var section GitStatus = Preamble
 	lines := bytes.Split(status, []byte("\n"))
 
@@ -107,12 +102,12 @@ func ParseGitStatus(status []byte, options Options) {
 			switch section {
 			case Staged:
 				staged.Println(fstatus)
-				if options.semantic || options.parsetree {
+				if options.Semantic || options.Parsetree {
 					ASTCompare(line, options)
 				}
 			case Unstaged:
 				unstaged.Println(fstatus)
-				if options.semantic || options.parsetree {
+				if options.Semantic || options.Parsetree {
 					ASTCompare(line, options)
 				}
 			case Untracked:
@@ -124,15 +119,15 @@ func ParseGitStatus(status []byte, options Options) {
 
 func main() {
 	// Configure default tools that might be overrridden by the TOML config
-	pythonCmd := Command{
+	pythonCmd := types.Command{
 		Executable: "python",
 		Switches:   []string{"-m", "ast", "-a"},
 	}
-	rubyCmd := Command{
+	rubyCmd := types.Command{
 		Executable: "ruby",
 		Switches:   []string{"--dump=parsetree"},
 	}
-	sqlCmd := Command{
+	sqlCmd := types.Command{
 		Executable: "sqlformat",
 		Switches: []string{
 			"--reindent_aligned",
@@ -166,12 +161,12 @@ func main() {
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 
-	options := Options{
-		status:    status,
-		semantic:  semantic,
-		glob:      glob,
-		verbose:   verbose,
-		parsetree: parsetree,
+	options := types.Options{
+		Status:    status,
+		Semantic:  semantic,
+		Glob:      glob,
+		Verbose:   verbose,
+		Parsetree: parsetree,
 	}
 
 	// Read the configuration file if it is present
@@ -179,7 +174,7 @@ func main() {
 	var err error
 
 	configFile := fmt.Sprintf("%s/.ast-diff.toml", os.Getenv("HOME"))
-	var config Config
+	var config types.Config
 	_, err = toml.DecodeFile(configFile, &config)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
