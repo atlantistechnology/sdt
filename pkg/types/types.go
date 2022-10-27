@@ -21,4 +21,3 @@ type (
 		Switches   []string `toml:"switches"`
 	}
 )
-

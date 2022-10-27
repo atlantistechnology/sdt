@@ -20,8 +20,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/BurntSushi/toml"
+	"github.com/fatih/color"
+
 	"github.com/atlantistechnology/ast-diff/pkg/ruby"
 	"github.com/atlantistechnology/ast-diff/pkg/sql"
 	"github.com/atlantistechnology/ast-diff/pkg/types"
@@ -36,7 +37,7 @@ const usage = `Usage of ast-dff:
   -h, --help       Display this help screen
 `
 
-func ASTCompare(line string, options types.Options) {
+func ASTCompare(line string, options types.Options, config types.Config) {
 	info := strings.TrimSpace(line)
 	fileLine := strings.SplitN(info, ":   ", 2)
 	status := fileLine[0]
@@ -47,13 +48,13 @@ func ASTCompare(line string, options types.Options) {
 	if status == "modified" {
 		switch ext {
 		case ".rb":
-			diffColor.Println(ruby.Diff(filename, options.Semantic, options.Parsetree))
+			diffColor.Println(ruby.Diff(filename, options, config))
 		case ".py":
 			// Something with `ast` module
 			diffColor.Println("| Comparison of Python ASTs")
 		case ".sql":
 			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
-			diffColor.Println(sql.Diff(filename, options.Semantic, options.Parsetree))
+			diffColor.Println(sql.Diff(filename, options, config))
 		case ".js":
 			// Probably eslint parsing
 			diffColor.Println("| Comparison with JS syntax tree")
@@ -75,7 +76,7 @@ const (
 	Untracked
 )
 
-func ParseGitStatus(status []byte, options types.Options) {
+func ParseGitStatus(status []byte, options types.Options, config types.Config) {
 	var section GitStatus = Preamble
 	lines := bytes.Split(status, []byte("\n"))
 
@@ -103,12 +104,12 @@ func ParseGitStatus(status []byte, options types.Options) {
 			case Staged:
 				staged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					ASTCompare(line, options)
+					ASTCompare(line, options, config)
 				}
 			case Unstaged:
 				unstaged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					ASTCompare(line, options)
+					ASTCompare(line, options, config)
 				}
 			case Untracked:
 				untracked.Println(fstatus)
@@ -118,25 +119,6 @@ func ParseGitStatus(status []byte, options types.Options) {
 }
 
 func main() {
-	// Configure default tools that might be overrridden by the TOML config
-	pythonCmd := types.Command{
-		Executable: "python",
-		Switches:   []string{"-m", "ast", "-a"},
-	}
-	rubyCmd := types.Command{
-		Executable: "ruby",
-		Switches:   []string{"--dump=parsetree"},
-	}
-	sqlCmd := types.Command{
-		Executable: "sqlformat",
-		Switches: []string{
-			"--reindent_aligned",
-			"--identifiers=lower",
-			"--strip-comments",
-			"--keywords=upper",
-		},
-	}
-
 	// Parse flags and switches provided on command line
 	var status bool
 	flag.BoolVar(&status, "status", false, "Modified since last git commit")
@@ -169,6 +151,26 @@ func main() {
 		Parsetree: parsetree,
 	}
 
+	// Configure default tools that might be overrridden by the TOML config
+	description := "Default commands for each language type"
+	pythonCmd := types.Command{
+		Executable: "python",
+		Switches:   []string{"-m", "ast", "-a"},
+	}
+	rubyCmd := types.Command{
+		Executable: "ruby",
+		Switches:   []string{"--dump=parsetree"},
+	}
+	sqlCmd := types.Command{
+		Executable: "sqlformat",
+		Switches: []string{
+			"--reindent_aligned",
+			"--identifiers=lower",
+			"--strip-comments",
+			"--keywords=upper",
+		},
+	}
+
 	// Read the configuration file if it is present
 	var out []byte
 	var err error
@@ -182,6 +184,9 @@ func main() {
 		if config.Glob != "" {
 			glob = config.Glob
 		}
+		if config.Description != "" {
+			description = config.Description
+		}
 		if userpython, found := config.Commands["python"]; found {
 			pythonCmd = userpython
 		}
@@ -192,6 +197,16 @@ func main() {
 			sqlCmd = usersql
 		}
 	}
+	// Create userCfg with possibly changed values for Commands
+	userCfg := types.Config{
+		Description: description,
+		Glob:        glob,
+		Commands: map[string]types.Command{
+			"python": pythonCmd,
+			"ruby":   rubyCmd,
+			"sql":    sqlCmd,
+		},
+	}
 
 	if status || semantic || parsetree {
 		cmd := exec.Command("git", "status")
@@ -199,11 +214,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ParseGitStatus(out, options)
+		ParseGitStatus(out, options, userCfg)
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "Description: %s\n", config.Description)
+		fmt.Fprintf(os.Stderr, "Description: %s\n", description)
 		fmt.Fprintf(os.Stderr, "status: %t\n", status)
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
