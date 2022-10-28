@@ -52,7 +52,7 @@ const usage = `Usage of Semantic Diff Tool (sdt):
 
 `
 
-func ASTCompare(line string, options types.Options, config types.Config) {
+func astCompare(line string, options types.Options, config types.Config) {
 	info := strings.TrimSpace(line)
 	fileLine := strings.SplitN(info, ":   ", 2)
 	status := fileLine[0]
@@ -82,17 +82,17 @@ func ASTCompare(line string, options types.Options, config types.Config) {
 	}
 }
 
-type GitStatus int8
+type gitStatus int8
 
 const (
-	Preamble GitStatus = iota
+	Preamble gitStatus = iota
 	Staged
 	Unstaged
 	Untracked
 )
 
-func ParseGitStatus(status []byte, options types.Options, config types.Config) {
-	var section GitStatus = Preamble
+func parseGitStatus(status []byte, options types.Options, config types.Config) {
+	var section gitStatus = Preamble
 	lines := bytes.Split(status, []byte("\n"))
 
 	header := color.New(color.FgWhite, color.Bold)
@@ -119,12 +119,12 @@ func ParseGitStatus(status []byte, options types.Options, config types.Config) {
 			case Staged:
 				staged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					ASTCompare(line, options, config)
+					astCompare(line, options, config)
 				}
 			case Unstaged:
 				unstaged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					ASTCompare(line, options, config)
+					astCompare(line, options, config)
 				}
 			case Untracked:
 				untracked.Println(fstatus)
@@ -237,7 +237,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ParseGitStatus(out, options, userCfg)
+		parseGitStatus(out, options, userCfg)
 	}
 
 	if verbose {
