@@ -3,7 +3,6 @@ package ruby
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -34,7 +33,7 @@ func colorDiff(
 	reComment := regexp.MustCompile(`(?m)^##.*$[\r\n]*`)
 	reSimpleTree := regexp.MustCompile(`(?m)(\| |\+-)`)
 
-	_, _ = buff.WriteString("Comparison of parse trees (HEAD -> Current)\n")
+	buff.WriteString("Comparison of parse trees (HEAD -> Current)\n")
 
 	for _, diff := range diffs {
 		text := diff.Text
@@ -43,16 +42,16 @@ func colorDiff(
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			_, _ = buff.WriteString("\x1b[32m")
-			_, _ = buff.WriteString(text)
-			_, _ = buff.WriteString("\x1b[0m")
+			buff.WriteString("\x1b[32m")
+			buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffDelete:
-			_, _ = buff.WriteString("\x1b[31m")
-			_, _ = buff.WriteString(text)
-			_, _ = buff.WriteString("\x1b[0m")
+			buff.WriteString("\x1b[31m")
+			buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffEqual:
-			_, _ = buff.WriteString("\x1b[0m")
-			_, _ = buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
+			buff.WriteString(text)
 		}
 	}
 	return utils.BufferToDiff(buff, false)
@@ -68,7 +67,7 @@ func changedGitSegments(gitDiff []byte, diffLines mapset.Set[uint32]) string {
 	var newStart uint32
 	var newCount uint32
 
-	_, _ = buff.WriteString("\x1b[33mSegments with likely semantic changes (HEAD -> Current)\n")
+	buff.WriteString("\x1b[33mSegments with likely semantic changes (HEAD -> Current)\n")
 
 	for _, line := range lines {
 		n, _ := fmt.Sscanf(
@@ -96,21 +95,21 @@ func changedGitSegments(gitDiff []byte, diffLines mapset.Set[uint32]) string {
 			}
 			switch prefix {
 			case byte('@'):
-				_, _ = buff.WriteString("\x1b[36m")
-				_, _ = buff.Write(line)
-				_, _ = buff.WriteString("\x1b[0m")
+				buff.WriteString("\x1b[36m")
+				buff.Write(line)
+				buff.WriteString("\x1b[0m")
 			case byte('+'):
-				_, _ = buff.WriteString("\x1b[32m")
-				_, _ = buff.Write(line)
-				_, _ = buff.WriteString("\x1b[0m")
+				buff.WriteString("\x1b[32m")
+				buff.Write(line)
+				buff.WriteString("\x1b[0m")
 			case byte('-'):
-				_, _ = buff.WriteString("\x1b[31m")
-				_, _ = buff.Write(line)
-				_, _ = buff.WriteString("\x1b[0m")
+				buff.WriteString("\x1b[31m")
+				buff.Write(line)
+				buff.WriteString("\x1b[0m")
 			default:
-				_, _ = buff.Write(line)
+				buff.Write(line)
 			}
-			_, _ = buff.WriteString("\n")
+			buff.WriteString("\n")
 		}
 	}
 	return utils.BufferToDiff(buff, true)
@@ -132,7 +131,6 @@ func semanticChanges(
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = gitDiff
 
 	// Determine the changes to the respective parse trees
 	patch := dmp.PatchToText(dmp.PatchMake(diffs))
@@ -157,7 +155,7 @@ func semanticChanges(
 	diffLines := mapset.NewSet[uint32]()
 
 	for i := 0; i < len(rangeLines); i++ {
-		n, err = fmt.Sscanf(
+		n, _ = fmt.Sscanf(
 			rangeLines[i],
 			"@@ -%d,%d +%d,%d @@",
 			&oldStart, &oldCount, &newStart, &newCount,
@@ -178,7 +176,7 @@ func semanticChanges(
 				line := string(treeLines[j])
 				lines := strings.Split(line, "(")
 				if len(lines) > 1 {
-					m, err = fmt.Sscanf(lines[1], "line: %d", &lineOfInterest)
+					m, _ = fmt.Sscanf(lines[1], "line: %d", &lineOfInterest)
 					if m == 1 {
 						diffLines.Add(lineOfInterest)
 					}
@@ -217,7 +215,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		log.Fatal(err)
 	}
 
-	tmpfile, err := ioutil.TempFile("", "*.rb")
+	tmpfile, err := os.CreateTemp("", "*.rb")
 	if err != nil {
 		log.Fatal(err)
 	}

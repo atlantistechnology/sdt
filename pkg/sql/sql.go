@@ -3,7 +3,6 @@ package sql
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -23,7 +22,7 @@ func colorDiff(
 	// Tool `sqlformat` doesn't normalize whitespace completely
 	reWhiteSpace := regexp.MustCompile("^[\n\r\t ]+$")
 
-	_, _ = buff.WriteString(
+	buff.WriteString(
 		"\x1b[33mComparison of canonicalized SQL (HEAD -> Current)\x1b[0m\n",
 	)
 
@@ -36,19 +35,20 @@ func colorDiff(
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			_, _ = buff.WriteString("\x1b[32m")
-			_, _ = buff.WriteString(text)
-			_, _ = buff.WriteString("\x1b[0m")
+
+			buff.WriteString("\x1b[32m")
+			buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffDelete:
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			_, _ = buff.WriteString("\x1b[31m")
-			_, _ = buff.WriteString(text)
-			_, _ = buff.WriteString("\x1b[0m")
+			buff.WriteString("\x1b[31m")
+			buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
 		case diffmatchpatch.DiffEqual:
-			_, _ = buff.WriteString("\x1b[0m")
-			_, _ = buff.WriteString(text)
+			buff.WriteString("\x1b[0m")
+			buff.WriteString(text)
 		}
 	}
 	if changed {
@@ -79,7 +79,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		log.Fatal(err)
 	}
 
-	tmpfile, err := ioutil.TempFile("", "*.sql")
+	tmpfile, err := os.CreateTemp("", "*.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
