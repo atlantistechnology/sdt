@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/exp/constraints"
 	"github.com/atlantistechnology/sdt/pkg/types"
+	"golang.org/x/exp/constraints"
 )
 
 type lineOffset struct {

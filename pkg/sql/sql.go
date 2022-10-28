@@ -2,8 +2,6 @@ package sql
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
