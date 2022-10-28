@@ -114,7 +114,7 @@ func parseGitStatus(status []byte, options types.Options, config types.Config) {
 		}
 
 		if strings.HasPrefix(line, "\t") {
-			fstatus := strings.Replace(line, "\t", "  ", 1)
+			fstatus := strings.Replace(line, "\t", "    ", 1)
 			switch section {
 			case Staged:
 				staged.Println(fstatus)
@@ -165,6 +165,14 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Show verbose output on STDERR")
 	flag.BoolVar(&verbose, "v", false, "Show verbose output on STDERR")
 
+	var src string
+	flag.StringVar(&src, "src", "HEAD:", "File, branch, or revision of source")
+	flag.StringVar(&src, "A", "HEAD:", "File, branch, or revision of source")
+
+	var dst string
+	flag.StringVar(&dst, "dst", "", "File, branch, or revision of destination")
+	flag.StringVar(&dst, "B", "", "File, branch, or revision of destination")
+
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 
@@ -179,11 +187,13 @@ func main() {
 
 	// Create a struct with the command-line configured options
 	options := types.Options{
-		Status:    status,
-		Semantic:  semantic,
-		Glob:      glob,
-		Verbose:   verbose,
-		Parsetree: parsetree,
+		Status:      status,
+		Semantic:    semantic,
+		Parsetree:   parsetree,
+		Glob:        glob,
+		Verbose:     verbose,
+		Source:      src,
+		Destination: dst,
 	}
 
 	// Configure default tools that might be overrridden by the TOML config
