@@ -2,9 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"golang.org/x/exp/constraints"
 	"regexp"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
 
 type lineOffset struct {
