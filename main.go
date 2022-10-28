@@ -28,7 +28,7 @@ import (
 	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
-const usage = `Usage of ast-dff:
+const usage = `Usage of Semantic Diff Tool (sdt):
   -s, --status     List all analyzable files modified since last git commit
   -l, --semantic   List semantically meaningful changes since last git commit
   -g, --glob       Limit compared files by a glob pattern
@@ -175,7 +175,7 @@ func main() {
 	var out []byte
 	var err error
 
-	configFile := fmt.Sprintf("%s/.ast-diff.toml", os.Getenv("HOME"))
+	configFile := fmt.Sprintf("%s/.sdt.toml", os.Getenv("HOME"))
 	var config types.Config
 	_, err = toml.DecodeFile(configFile, &config)
 	if err != nil {

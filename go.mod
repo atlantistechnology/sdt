@@ -1,4 +1,4 @@
-module github.com/atlantistechnology/ast-diff
+module github.com/atlantistechnology/sdt
 
 go 1.18
 
