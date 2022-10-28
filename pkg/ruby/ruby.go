@@ -3,7 +3,6 @@ package ruby
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -216,7 +215,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		log.Fatal(err)
 	}
 
-	tmpfile, err := ioutil.TempFile("", "*.rb")
+	tmpfile, err := os.CreateTemp("", "*.rb")
 	if err != nil {
 		log.Fatal(err)
 	}

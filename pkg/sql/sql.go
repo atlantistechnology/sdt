@@ -3,7 +3,6 @@ package sql
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -80,7 +79,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		log.Fatal(err)
 	}
 
-	tmpfile, err := ioutil.TempFile("", "*.sql")
+	tmpfile, err := os.CreateTemp("", "*.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
