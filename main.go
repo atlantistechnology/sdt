@@ -23,9 +23,9 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/fatih/color"
 
-	"github.com/atlantistechnology/ast-diff/pkg/ruby"
-	"github.com/atlantistechnology/ast-diff/pkg/sql"
-	"github.com/atlantistechnology/ast-diff/pkg/types"
+	"github.com/atlantistechnology/sdt/pkg/ruby"
+	"github.com/atlantistechnology/sdt/pkg/sql"
+	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
 const usage = `Usage of ast-dff:
