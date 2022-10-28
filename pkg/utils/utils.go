@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/constraints"
+	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
 type lineOffset struct {
@@ -77,7 +78,8 @@ func BufferToDiff(buff bytes.Buffer, colorLeft bool) string {
 	ret := buff.String()
 	rePrepend := regexp.MustCompile(`(?m)^`)
 	if colorLeft {
-		ret = rePrepend.ReplaceAllString(ret, "\x1b[33m|\x1b[0m ")
+		colorPipe := types.YELLOW + "| " + types.CLEAR
+		ret = rePrepend.ReplaceAllString(ret, colorPipe)
 	} else {
 		ret = rePrepend.ReplaceAllString(ret, "| ")
 	}

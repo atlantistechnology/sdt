@@ -21,3 +21,11 @@ type (
 		Switches   []string `toml:"switches"`
 	}
 )
+
+// In places, github.com/fatih/color is used, but raw ANSI is easier
+// for writing custom reports based on sergi/go-diff/diffmatchpatch
+var CYAN string = "\x1b[36m"
+var YELLOW string = "\x1b[33m"
+var GREEN string = "\x1b[32m"
+var RED string = "\x1b[31m"
+var CLEAR string = "\x1b[0m"

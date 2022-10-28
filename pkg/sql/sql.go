@@ -3,6 +3,7 @@ package sql
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -22,9 +23,10 @@ func colorDiff(
 	// Tool `sqlformat` doesn't normalize whitespace completely
 	reWhiteSpace := regexp.MustCompile("^[\n\r\t ]+$")
 
-	buff.WriteString(
-		"\x1b[33mComparison of canonicalized SQL (HEAD -> Current)\x1b[0m\n",
-	)
+	desc := types.YELLOW +
+		"Comparison of canonicalized SQL (HEAD -> Current)\n" +
+		types.CLEAR
+	buff.WriteString(desc)
 
 	changed := false
 	for _, diff := range diffs {
@@ -35,19 +37,18 @@ func colorDiff(
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-
-			buff.WriteString("\x1b[32m")
+			buff.WriteString(types.GREEN)
 			buff.WriteString(text)
-			buff.WriteString("\x1b[0m")
+			buff.WriteString(types.CLEAR)
 		case diffmatchpatch.DiffDelete:
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			buff.WriteString("\x1b[31m")
+			buff.WriteString(types.RED)
 			buff.WriteString(text)
-			buff.WriteString("\x1b[0m")
+			buff.WriteString(types.CLEAR)
 		case diffmatchpatch.DiffEqual:
-			buff.WriteString("\x1b[0m")
+			buff.WriteString(types.CLEAR)
 			buff.WriteString(text)
 		}
 	}
@@ -73,7 +74,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	// Retrieve the HEAD version of the file to a temporary filename
-	cmdHead := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", filename))
+	cmdHead := exec.Command("git", "show", "HEAD:"+filename)
 	head, err = cmdHead.Output()
 	if err != nil {
 		log.Fatal(err)
