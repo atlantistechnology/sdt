@@ -1,6 +1,6 @@
 def add(a, b):
     "Add two numbers together"
-    total = a + b
+    total = a+b
     return total
 
 
@@ -18,7 +18,7 @@ def mul(a, b):
 
 def div(a, b):
     "Divide a number by another number"
-    ratio = a / b
+    ratio = a/b
     return ratio
 
 
@@ -36,5 +36,5 @@ def more(a, b):
 
 def sub(a, b):
     "Subtract a number from another number"
-    diff = a - b
+    diff = a-b
     return diff
