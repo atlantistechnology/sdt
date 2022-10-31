@@ -16,14 +16,24 @@ import (
 // colorDiff converts (DiffMatchPatch, []Diff) into colored text report
 func colorDiff(
 	dmp *diffmatchpatch.DiffMatchPatch,
-	diffs []diffmatchpatch.Diff) string {
+	diffs []diffmatchpatch.Diff,
+	dumbterm bool) string {
+
 	var buff bytes.Buffer
 	// Tool `sqlformat` doesn't normalize whitespace completely
-	reWhiteSpace := regexp.MustCompile("^[\n\r\t ]+$")
+	reWhiteSpace := regexp.MustCompile(`^[\n\r\t ]+$`)
 
-	desc := types.YELLOW +
+	var highlights types.Highlights
+	if dumbterm {
+		highlights = types.Dumbterm
+	} else {
+		highlights = types.Colors
+	}
+
+	desc := highlights.Header +
 		"Comparison of canonicalized SQL (HEAD -> Current)\n" +
-		types.CLEAR
+		highlights.Neutral +
+		highlights.Clear
 	buff.WriteString(desc)
 
 	changed := false
@@ -35,23 +45,26 @@ func colorDiff(
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			buff.WriteString(types.GREEN)
+			buff.WriteString(highlights.Add)
 			buff.WriteString(text)
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffDelete:
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			buff.WriteString(types.RED)
+			buff.WriteString(highlights.Add)
 			buff.WriteString(text)
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffEqual:
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Neutral)
+			buff.WriteString(highlights.Clear)
 			buff.WriteString(text)
 		}
 	}
 	if changed {
-		return utils.BufferToDiff(buff, true)
+		report := utils.BufferToDiff(buff, true)
+		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
+		return reCleanupDumbterm.ReplaceAllString(report, "")
 	}
 	return "| No semantic differences detected"
 }
@@ -105,7 +118,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	if options.Semantic {
-		return colorDiff(dmp, diffs)
+		return colorDiff(dmp, diffs, options.Dumbterm)
 	}
 
 	return "| No diff type specified"

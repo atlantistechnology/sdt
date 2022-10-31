@@ -68,12 +68,14 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	diffs := dmp.DiffMain(headTreeString, currentTreeString, false)
 
 	if options.Parsetree {
-		return utils.ColorDiff(dmp, diffs, types.Ruby)
+		return utils.ColorDiff(dmp, diffs, types.Ruby, options.Dumbterm)
 	}
 
 	if options.Semantic {
 		return utils.SemanticChanges(
-			dmp, diffs, filename, headTree, headTreeString, types.Ruby,
+			dmp, diffs, filename,
+			headTree, headTreeString,
+			types.Ruby, options.Dumbterm,
 		)
 	}
 

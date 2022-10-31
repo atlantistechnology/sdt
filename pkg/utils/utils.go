@@ -85,7 +85,7 @@ func BufferToDiff(buff bytes.Buffer, colorLeft bool) string {
 	ret := buff.String()
 	rePrepend := regexp.MustCompile(`(?m)^`)
 	if colorLeft {
-		colorPipe := types.YELLOW + "| " + types.CLEAR
+		colorPipe := types.Colors.Header + "| " + types.Colors.Clear
 		ret = rePrepend.ReplaceAllString(ret, colorPipe)
 	} else {
 		ret = rePrepend.ReplaceAllString(ret, "| ")
@@ -99,7 +99,8 @@ func SemanticChanges(
 	filename string,
 	headTree []byte,
 	headTreeString string,
-	parseType types.ParseType) string {
+	parseType types.ParseType,
+	dumbterm bool) string {
 
 	var gitDiff []byte
 	var err error
@@ -180,7 +181,7 @@ func SemanticChanges(
 	}
 
 	if len(ranges) > 0 {
-		changedSegments := changedGitSegments(gitDiff, diffLines)
+		changedSegments := changedGitSegments(gitDiff, diffLines, dumbterm)
 		return changedSegments
 	} else {
 		return "| No semantic differences detected"
@@ -191,7 +192,15 @@ func SemanticChanges(
 func ColorDiff(
 	dmp *diffmatchpatch.DiffMatchPatch,
 	diffs []diffmatchpatch.Diff,
-	parseType types.ParseType) string {
+	parseType types.ParseType,
+	dumbterm bool) string {
+
+	var highlights types.Highlights
+	if dumbterm {
+		highlights = types.Dumbterm
+	} else {
+		highlights = types.Colors
+	}
 
 	var buff bytes.Buffer
 	var transforms []regexp.Regexp
@@ -214,22 +223,41 @@ func ColorDiff(
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			buff.WriteString(types.GREEN)
+			buff.WriteString(highlights.Add)
 			buff.WriteString(text)
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffDelete:
-			buff.WriteString(types.RED)
+			buff.WriteString(highlights.Del)
 			buff.WriteString(text)
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffEqual:
-			buff.WriteString(types.CLEAR)
+			buff.WriteString(highlights.Neutral)
+			buff.WriteString(highlights.Clear)
 			buff.WriteString(text)
 		}
 	}
-	return BufferToDiff(buff, false)
+
+	report := BufferToDiff(buff, false)
+	if dumbterm {
+		// For dumb terminal/CI=true, do some cleanup
+		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
+		report = reCleanupDumbterm.ReplaceAllString(report, "")
+	}
+	return report
 }
 
-func changedGitSegments(gitDiff []byte, diffLines mapset.Set[uint32]) string {
+func changedGitSegments(
+	gitDiff []byte,
+	diffLines mapset.Set[uint32],
+	dumbterm bool) string {
+
+	var highlights types.Highlights
+	if dumbterm {
+		highlights = types.PlainASCII
+	} else {
+		highlights = types.Colors
+	}
+
 	var buff bytes.Buffer
 	lines := bytes.Split(gitDiff, []byte("\n"))
 	showSegment := false
@@ -238,7 +266,7 @@ func changedGitSegments(gitDiff []byte, diffLines mapset.Set[uint32]) string {
 	var newStart uint32
 	var newCount uint32
 
-	buff.WriteString(types.YELLOW)
+	buff.WriteString(highlights.Header)
 	buff.WriteString("Segments with likely semantic changes (HEAD -> Current)\n")
 
 	for _, line := range lines {
@@ -267,17 +295,17 @@ func changedGitSegments(gitDiff []byte, diffLines mapset.Set[uint32]) string {
 			}
 			switch prefix {
 			case byte('@'):
-				buff.WriteString(types.CYAN)
+				buff.WriteString(highlights.Info)
 				buff.Write(line)
-				buff.WriteString(types.CLEAR)
+				buff.WriteString(highlights.Clear)
 			case byte('+'):
-				buff.WriteString(types.GREEN)
+				buff.WriteString(highlights.Add)
 				buff.Write(line)
-				buff.WriteString(types.CLEAR)
+				buff.WriteString(highlights.Clear)
 			case byte('-'):
-				buff.WriteString(types.RED)
+				buff.WriteString(highlights.Del)
 				buff.Write(line)
-				buff.WriteString(types.CLEAR)
+				buff.WriteString(highlights.Clear)
 			default:
 				buff.Write(line)
 			}
