@@ -151,6 +151,9 @@ func SemanticChanges(
 			// source code position (possible false positives aren't so important)
 			switch parseType {
 			case types.Ruby:
+				// Ruby parse tree seems slightly futzy.
+				// Try a few lines before and after the line found for underlying
+				// source code position (possible false positives aren't so important)
 				minLine := Max(parseTreeLineNum-2, 0)
 				maxLine := Min(parseTreeLineNum+2, len(treeLines))
 				for j := minLine; j < maxLine; j++ {
@@ -164,7 +167,14 @@ func SemanticChanges(
 					}
 				}
 			case types.Python:
-				// TODO
+				// In Python parse tree we find exactly the right lineno
+				reLeadingSpace := regexp.MustCompile("^[\n\r\t ]+")
+				line := string(treeLines[parseTreeLineNum-1])
+				line = reLeadingSpace.ReplaceAllString(line, "")
+				m, _ = fmt.Sscanf(line, "lineno=%d", &lineOfInterest)
+				if m == 1 {
+					diffLines.Add(lineOfInterest)
+				}
 			}
 		}
 	}
