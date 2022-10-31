@@ -31,3 +31,14 @@ var YELLOW string = "\x1b[33m"
 var GREEN string = "\x1b[32m"
 var RED string = "\x1b[31m"
 var CLEAR string = "\x1b[0m"
+
+// Keep "enum" of types of parse trees we can handle here (<=256 for now)
+type ParseType uint8
+
+const (
+	Ruby ParseType = iota
+	Python
+	JavaScript
+	Golang
+	SomeOtherLanguage
+)

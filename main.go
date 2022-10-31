@@ -23,6 +23,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/fatih/color"
 
+	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
 	"github.com/atlantistechnology/sdt/pkg/types"
@@ -66,7 +67,7 @@ func astCompare(line string, options types.Options, config types.Config) {
 			diffColor.Println(ruby.Diff(filename, options, config))
 		case ".py":
 			// Something with `ast` module
-			diffColor.Println("| Comparison of Python ASTs")
+			diffColor.Println(python.Diff(filename, options, config))
 		case ".sql":
 			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
 			diffColor.Println(sql.Diff(filename, options, config))
