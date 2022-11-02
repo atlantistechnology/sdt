@@ -156,32 +156,45 @@ func consistentOptions(options types.Options) string {
 		if dst == "" || strings.HasSuffix(dst, ":") {
 			return "A source of a filepath must be matched by a destination filepath"
 		} else {
-            if _, err := os.Stat(src); err != nil {
-                return "The file " + src + " does not exist!"
-            }
-            if _, err := os.Stat(dst); err != nil {
-                return "The file " + dst + " does not exist!"
-            }
-        }
+			if _, err := os.Stat(src); err != nil {
+				return "The file " + src + " does not exist!"
+			}
+			if _, err := os.Stat(dst); err != nil {
+				return "The file " + dst + " does not exist!"
+			}
+		}
+	}
+
+	// If no subcommand is given, --src and --dst make no sense
+	if !options.Status && !options.Semantic && !options.Parsetree {
+		if options.Source != "HEAD:" && options.Destination != "" {
+			return "Specifying source or destination is meaningless without a subcommand"
+		}
+
 	}
 
 	return "HAPPY"
 }
 
-func main() {
-	// Announce to STDERR if cannot run the specified command
-	fail := log.New(os.Stderr, "", 0)
+func getOptions() types.Options {
+	fail := log.New(os.Stderr,
+		types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
 
 	// Manually pull out "subcommand" since we do not actually want
 	// different flags for different subcommands
 	subcommand := "FLAGS_ONLY"
 	if len(os.Args) == 2 && os.Args[1][0] != '-' {
-		// Sub-command only
+		// Subcommand only
 		subcommand = os.Args[1]
 		os.Args = os.Args[:1]
 	} else if len(os.Args) > 2 && os.Args[1][0] != '-' {
 		// Subcommand and extra flags
 		subcommand = os.Args[1]
+		// Bad attempt at second subcommand
+		if os.Args[2][0] != '-' {
+			fail.Println("Only one subcommand may be specified")
+			os.Exit(-1)
+		}
 		os.Args = append(os.Args[:1], os.Args[2:]...)
 	}
 
@@ -193,8 +206,8 @@ func main() {
 	flag.BoolVar(&semantic, "l", false, "Semantically meaningful changes")
 
 	var glob string
-	flag.StringVar(&glob, "glob", "*.*", "Limit compared files by a glob pattern")
-	flag.StringVar(&glob, "g", "*.*", "Limit compared files by glob (short flag)")
+	flag.StringVar(&glob, "glob", "*", "Limit compared files by a glob pattern")
+	flag.StringVar(&glob, "g", "*", "Limit compared files by glob (short flag)")
 
 	var parsetree bool
 	flag.BoolVar(&parsetree, "p", false, "Full syntax tree differences")
@@ -232,7 +245,7 @@ func main() {
 	}
 
 	// Create a struct with the command-line configured options
-	options := types.Options{
+	return types.Options{
 		Status:      status,
 		Semantic:    semantic,
 		Parsetree:   parsetree,
@@ -242,7 +255,15 @@ func main() {
 		Source:      src,
 		Destination: dst,
 	}
+}
 
+func main() {
+	// Announce to STDERR if cannot run the specified command
+	fail := log.New(os.Stderr,
+		types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
+
+	// Process all flags and subcommands provided
+	options := getOptions()
 	checkOpts := consistentOptions(options)
 	if checkOpts != "HAPPY" {
 		fail.Println(checkOpts)
@@ -250,7 +271,6 @@ func main() {
 	}
 
 	// Configure default tools that might be overrridden by the TOML config
-	description := "Default commands for each language type"
 	python := types.Command{
 		Executable: "python",
 		Switches:   []string{"-m", "ast", "-a"},
@@ -286,18 +306,24 @@ func main() {
 	var out []byte
 
 	cfgMessage := "Read $HOME/.sdt.toml for configuration overrides"
+	description := "Default commands for each language type"
 	configFile := fmt.Sprintf("%s/.sdt.toml", os.Getenv("HOME"))
+
 	var config types.Config
 	_, err := toml.DecodeFile(configFile, &config)
+
 	if err != nil {
 		cfgMessage = "No $HOME/.sdt.toml file, using built-in defaults"
 	} else {
-		if config.Glob != "" {
-			glob = config.Glob
+		// Glob can be defined twice, but command-line rules when different
+		if config.Glob != "" && options.Glob == "*" {
+			options.Glob = config.Glob
 		}
+		// $HOME/.sdt.toml may override default description if present
 		if config.Description != "" {
 			description = config.Description
 		}
+		// We might override default programming language commands
 		if userpython, found := config.Commands["python"]; found {
 			python = userpython
 		}
@@ -314,7 +340,7 @@ func main() {
 	// Create userCfg with possibly changed values for Commands
 	userCfg := types.Config{
 		Description: description,
-		Glob:        glob,
+		Glob:        config.Glob,
 		Commands: map[string]types.Command{
 			"python":     python,
 			"ruby":       ruby,
@@ -323,26 +349,43 @@ func main() {
 		},
 	}
 
-	if status || semantic || parsetree {
-		cmd := exec.Command("git", "status")
-		out, err = cmd.Output()
-		if err != nil {
-			fail.Println(err, "(probably not in a git directory)")
-			return
+	if options.Status || options.Semantic || options.Parsetree {
+		if strings.HasSuffix(options.Destination, ":") {
+			// Handle case of two branches/revisions given for -A/-B
+			cmd := exec.Command("git", "diff", "--compact-summary",
+				options.Source, options.Destination,
+			)
+			out, err = cmd.Output()
+			if err != nil {
+				fail.Println("One or both revisions are unavailable:",
+					options.Source, options.Destination)
+				return
+			}
+			fmt.Println("XXX\n" + string(out))
+		} else if options.Source != "HEAD:" {
+			fmt.Println("XXX Will only compare revision to committed files")
+		} else {
+			// Handle default case of comparing current files to HEAD:
+			cmd := exec.Command("git", "status")
+			out, err = cmd.Output()
+			if err != nil {
+				fail.Println(err, "(probably not in a git directory)")
+				return
+			}
+			parseGitStatus(out, options, userCfg)
 		}
-		parseGitStatus(out, options, userCfg)
 	}
 
-	if verbose {
+	if options.Verbose {
 		fmt.Fprintf(os.Stderr, "Description: %s\n", description)
 		fmt.Fprintf(os.Stderr, "Config: %s\n", cfgMessage)
-		fmt.Fprintf(os.Stderr, "status: %t\n", status)
-		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
-		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
-		fmt.Fprintf(os.Stderr, "glob: %s\n", glob)
-		fmt.Fprintf(os.Stderr, "source: %s\n", src)
-		fmt.Fprintf(os.Stderr, "destination: %s\n", dst)
-		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", dumbterm)
+		fmt.Fprintf(os.Stderr, "status: %t\n", options.Status)
+		fmt.Fprintf(os.Stderr, "semantic: %t\n", options.Semantic)
+		fmt.Fprintf(os.Stderr, "parsetree: %t\n", options.Parsetree)
+		fmt.Fprintf(os.Stderr, "glob: %s\n", options.Glob)
+		fmt.Fprintf(os.Stderr, "source: %s\n", options.Source)
+		fmt.Fprintf(os.Stderr, "destination: %s\n", options.Destination)
+		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", options.Dumbterm)
 		fmt.Fprintf(os.Stderr, "---\n")
 		fmt.Fprintf(os.Stderr, "python: %s %s\n", python.Executable, python.Switches)
 		fmt.Fprintf(os.Stderr, "ruby: %s %s\n", ruby.Executable, ruby.Switches)
