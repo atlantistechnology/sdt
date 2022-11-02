@@ -22,6 +22,7 @@ type (
 	Command struct {
 		Executable string   `toml:"executable"`
 		Switches   []string `toml:"switches"`
+		Options    string   `toml:"options"`
 	}
 
 	Highlights struct {

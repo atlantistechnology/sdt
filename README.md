@@ -62,18 +62,43 @@ for versions that will be created in the future and do not yet exist).
 
 Initial support created.  Supports both --semantic and --parsetree flags.
 
+Only a `ruby` interpreter is required (by default)
+
 ## Python
 
-TODO
+Initial support created.  Supports both --semantic and --parsetree flags.
+
+Only a `python` interpreter is required (by default)
 
 ## SQL
 
 Initial support created.  Uses canonicalization rather than parsing, so
 only the --semantic flag is supported.
 
+Requires the tool `sqlformat` (by default).  See:
+
+* https://github.com/andialbrecht/sqlparse
+* https://manpages.ubuntu.com/manpages/jammy/man1/sqlformat.1.html
+
 ## JavaScript
 
-TODO
+TODO.  Supports both --semantic and --parsetree flags.
+
+Requires the `node` interpreter and the library `acorn` (by default). See:
+
+* https://github.com/acornjs/acorn/tree/master/acorn/
+
+Use of the error-tolerant variant `acorn-loose` was contemplated and
+rejected (as a default).  We believe this tool would be more likely to
+produce spurious difference in parse trees. See:
+
+* https://github.com/acornjs/acorn/tree/master/acorn-loose/
+
+Note that Node 18.10 was used during development. However, any node version
+supported by Acorn should work identically.  However, if you wish to treat
+the files being analyzed as a specific ECMAScript version, see the option
+`ecmaVersion` that can be configured in `.sdt.toml` and is discussed in the
+sample version of that file.
 
 ## Golang
 

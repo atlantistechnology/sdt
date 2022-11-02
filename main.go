@@ -23,6 +23,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/fatih/color"
 
+	"github.com/atlantistechnology/sdt/pkg/javascript"
 	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
@@ -31,10 +32,11 @@ import (
 
 const usage = `Usage of Semantic Diff Tool (sdt):
 
-  Names indicated without dashes are subcommands rather than switches
+  Names indicated without dashes are subcommands rather than switches.
+  If switches are used, they must follow subcommands (if any).
 
   status, -s      List all analyzable files modified since last git commit
-  semantic, -l    List semantically meaningful changes since last git commit
+  semantic, -l    List semantically meaningful changes (default viz HEAD:)
   parsetree, -p   Full syntax tree differences (where applicable)
   -g, --glob      Limit compared files by a glob pattern
   -v, --verbose   Show verbose output on STDERR
@@ -43,8 +45,8 @@ const usage = `Usage of Semantic Diff Tool (sdt):
 
   If not specified, comparisons are between current changes and HEAD.
 
-  -A, --src       File, branch, or revision of source (colon required for revision)
-  -B, --dst       File, branch, or revision of destination (current if omitted)
+  -A, --src       File, branch, or revision of source (colon for branch/rev)
+  -B, --dst       File, branch, or rev of destination (current if omitted)
 
   Examples:
 
@@ -67,14 +69,11 @@ func astCompare(line string, options types.Options, config types.Config) {
 		case ".rb":
 			diffColor.Println(ruby.Diff(filename, options, config))
 		case ".py":
-			// Something with `ast` module
 			diffColor.Println(python.Diff(filename, options, config))
 		case ".sql":
-			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
 			diffColor.Println(sql.Diff(filename, options, config))
 		case ".js":
-			// Probably eslint parsing
-			diffColor.Println("| Comparison with JS syntax tree")
+			diffColor.Println(javascript.Diff(filename, options, config))
 		case ".go":
 			// TODO: Need to investigate AST tools
 			diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
@@ -135,7 +134,37 @@ func parseGitStatus(status []byte, options types.Options, config types.Config) {
 	}
 }
 
+func consistentOptions(options types.Options) string {
+	// For now we will only allow the following combinations
+	//
+	//   sdt <subcommand> -A branch:      # -B omitted
+	//   sdt <subcommand> -A revision:    # -B omitted
+	//   sdt <subcommand> -A branch/rev: -B branch/rev:
+	//   sdt <subcommand> -A local-file1 -B local-file2
+	//
+	// In the future this might be enhanced to allow direct reference
+	// to a particular file in a particular revision; but the logic of
+	// which revisions do or don't have a specific file has too many
+	// edge cases for now.
+	src := options.Source
+	dst := options.Destination
+	if strings.HasSuffix(src, ":") {
+		if dst != "" && !strings.HasSuffix(dst, ":") {
+			return "You may only compare a branch/revision with another branch/revision"
+		}
+	} else {
+		if dst == "" || strings.HasSuffix(dst, ":") {
+			return "A source of a filepath must be matched by a destination filepath"
+		}
+	}
+
+	return "HAPPY"
+}
+
 func main() {
+	// Announce to STDERR if cannot run the specified command
+	fail := log.New(os.Stderr, "", 0)
+
 	// Manually pull out "subcommand" since we do not actually want
 	// different flags for different subcommands
 	subcommand := "FLAGS_ONLY"
@@ -207,15 +236,23 @@ func main() {
 		Destination: dst,
 	}
 
+	checkOpts := consistentOptions(options)
+	if checkOpts != "HAPPY" {
+		fail.Println(checkOpts)
+		return
+	}
+
 	// Configure default tools that might be overrridden by the TOML config
 	description := "Default commands for each language type"
 	python := types.Command{
 		Executable: "python",
 		Switches:   []string{"-m", "ast", "-a"},
+		Options:    "",
 	}
 	ruby := types.Command{
 		Executable: "ruby",
 		Switches:   []string{"--dump=parsetree"},
+		Options:    "",
 	}
 	sql := types.Command{
 		Executable: "sqlformat",
@@ -225,12 +262,23 @@ func main() {
 			"--strip-comments",
 			"--keywords=upper",
 		},
+		Options: "",
+	}
+	jsParse := `'const acorn = require("acorn"); ` +
+		`const fs = require("fs"); ` +
+		`const source = fs.readFileSync("${FILENAME}", "utf8"); ` +
+		`const parse = acorn.parse(source, ${OPTIONS}); ` +
+		`console.log(JSON.stringify(parse, null, ""));'`
+	js := types.Command{
+		Executable: "node",
+		Switches:   []string{"-e", jsParse},
+		Options:    "{sourceType: 'module', ecmaVersion: 'latest'}",
 	}
 
 	// Read the configuration file if it is present
 	var out []byte
 
-	cfgMessage := "Read $HOME/sdt.toml for configuration overrides"
+	cfgMessage := "Read $HOME/.sdt.toml for configuration overrides"
 	configFile := fmt.Sprintf("%s/.sdt.toml", os.Getenv("HOME"))
 	var config types.Config
 	_, err := toml.DecodeFile(configFile, &config)
@@ -252,15 +300,19 @@ func main() {
 		if usersql, found := config.Commands["sql"]; found {
 			sql = usersql
 		}
+		if userjs, found := config.Commands["javascript"]; found {
+			js = userjs
+		}
 	}
 	// Create userCfg with possibly changed values for Commands
 	userCfg := types.Config{
 		Description: description,
 		Glob:        glob,
 		Commands: map[string]types.Command{
-			"python": python,
-			"ruby":   ruby,
-			"sql":    sql,
+			"python":     python,
+			"ruby":       ruby,
+			"sql":        sql,
+			"javascript": js,
 		},
 	}
 
@@ -268,7 +320,8 @@ func main() {
 		cmd := exec.Command("git", "status")
 		out, err = cmd.Output()
 		if err != nil {
-			log.Fatal(err)
+			fail.Println(err, "(probably not in a git directory)")
+			return
 		}
 		parseGitStatus(out, options, userCfg)
 	}
@@ -280,9 +333,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
 		fmt.Fprintf(os.Stderr, "glob: %s\n", glob)
+		fmt.Fprintf(os.Stderr, "source: %s\n", src)
+		fmt.Fprintf(os.Stderr, "destination: %s\n", dst)
 		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", dumbterm)
+		fmt.Fprintf(os.Stderr, "---\n")
 		fmt.Fprintf(os.Stderr, "python: %s %s\n", python.Executable, python.Switches)
 		fmt.Fprintf(os.Stderr, "ruby: %s %s\n", ruby.Executable, ruby.Switches)
-		fmt.Fprintf(os.Stderr, "sql: %s %s\n", sql.Executable, sql.Switches)
+		fmt.Fprintf(os.Stderr, "sql: %s\n  %s\n", sql.Executable, sql.Switches)
+		fmt.Fprintf(os.Stderr, "javascript: %s\n  %s\n  %s\n",
+			js.Executable, js.Switches, js.Options)
 	}
 }
