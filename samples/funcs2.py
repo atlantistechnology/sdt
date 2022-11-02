@@ -36,5 +36,5 @@ def more(a, b):
 
 def div(a, b):
     "Divide a number by another number"
-    ratio = a//b
+    ratio = a // b
     return ratio
