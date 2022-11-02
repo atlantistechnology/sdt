@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,6 +27,7 @@ import (
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
 	"github.com/atlantistechnology/sdt/pkg/types"
+	"github.com/atlantistechnology/sdt/pkg/utils"
 )
 
 const usage = `Usage of Semantic Diff Tool (sdt):
@@ -56,30 +56,59 @@ const usage = `Usage of Semantic Diff Tool (sdt):
 
 `
 
-func astCompare(line string, options types.Options, config types.Config) {
-	info := strings.TrimSpace(line)
-	fileLine := strings.SplitN(info, ":   ", 2)
-	status := fileLine[0]
-	filename := fileLine[1]
-	ext := filepath.Ext(line)
+func compareFileType(
+	ext string,
+	filename string,
+	options types.Options,
+	config types.Config,
+) {
 	diffColor := color.New(color.FgYellow)
+	switch ext {
+	case ".rb":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".py":
+		diffColor.Println(python.Diff(filename, options, config))
+	case ".sql":
+		diffColor.Println(sql.Diff(filename, options, config))
+	case ".js":
+		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".go":
+		// TODO: Need to investigate AST tools
+		diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
+	default:
+		diffColor.Println("| No available semantic analyzer for this format")
+	}
+}
 
-	if status == "modified" {
-		switch ext {
-		case ".rb":
-			diffColor.Println(ruby.Diff(filename, options, config))
-		case ".py":
-			diffColor.Println(python.Diff(filename, options, config))
-		case ".sql":
-			diffColor.Println(sql.Diff(filename, options, config))
-		case ".js":
-			diffColor.Println(javascript.Diff(filename, options, config))
-		case ".go":
-			// TODO: Need to investigate AST tools
-			diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
-		default:
-			diffColor.Println("| No available semantic analyzer for this format")
+func compare(
+	line string,
+	options types.Options,
+	config types.Config,
+	lineType types.LineType,
+) {
+	switch lineType {
+	case types.Status:
+		info := strings.TrimSpace(line)
+		fileLine := strings.SplitN(info, ":   ", 2)
+		status := fileLine[0]
+		filename := fileLine[1]
+		ext := filepath.Ext(line)
+
+		if status == "modified" {
+			compareFileType(ext, filename, options, config)
 		}
+	case types.CompactDiff:
+		// TODO
+	case types.RawNames:
+		ext := filepath.Ext(options.Source)
+		ext2 := filepath.Ext(options.Destination)
+		if ext != ext2 {
+			utils.Info.Println("File extensions mismatch, assuming type of source")
+		}
+		// We allow a slight cleverness of an empty filename meaning that
+		// the comparison is between options.Source and options.Destination
+		// which will by filepaths not branches/revisions
+		compareFileType(ext, "", options, config)
 	}
 }
 
@@ -120,12 +149,12 @@ func parseGitStatus(status []byte, options types.Options, config types.Config) {
 			case Staged:
 				staged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					astCompare(line, options, config)
+					compare(line, options, config, types.Status)
 				}
 			case Unstaged:
 				unstaged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					astCompare(line, options, config)
+					compare(line, options, config, types.Status)
 				}
 			case Untracked:
 				untracked.Println(fstatus)
@@ -177,9 +206,6 @@ func consistentOptions(options types.Options) string {
 }
 
 func getOptions() types.Options {
-	fail := log.New(os.Stderr,
-		types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
-
 	// Manually pull out "subcommand" since we do not actually want
 	// different flags for different subcommands
 	subcommand := "FLAGS_ONLY"
@@ -192,7 +218,7 @@ func getOptions() types.Options {
 		subcommand = os.Args[1]
 		// Bad attempt at second subcommand
 		if os.Args[2][0] != '-' {
-			fail.Println("Only one subcommand may be specified")
+			utils.Fail.Println("Only one subcommand may be specified")
 			os.Exit(-1)
 		}
 		os.Args = append(os.Args[:1], os.Args[2:]...)
@@ -258,15 +284,11 @@ func getOptions() types.Options {
 }
 
 func main() {
-	// Announce to STDERR if cannot run the specified command
-	fail := log.New(os.Stderr, types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
-	info := log.New(os.Stderr, types.Colors.Info+"INFO: "+types.Colors.Clear, 0)
-
 	// Process all flags and subcommands provided
 	options := getOptions()
 	checkOpts := consistentOptions(options)
 	if checkOpts != "HAPPY" {
-		fail.Println(checkOpts)
+		utils.Fail.Println(checkOpts)
 		return
 	}
 
@@ -359,35 +381,38 @@ func main() {
 			)
 			out, err = cmd.Output()
 			if err != nil {
-				fail.Println("One or both revisions are unavailable:",
+				utils.Fail.Println("One or both revisions are unavailable:",
 					options.Source, options.Destination)
 				return
 			}
-			info.Println("Only committed files will be included in comparison to branch")
+			utils.Info.Println(
+				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
-		} else if options.Source != "HEAD:" {
-			// Handle case of comparing source branch/revision to HEAD
+		} else if options.Source != "HEAD:" && options.Destination == "" {
+			// Handle case of comparing source branch/revision to dest HEAD
 			cmd := exec.Command("git", "diff", "--compact-summary",
 				options.Source, "HEAD:",
 			)
 			out, err = cmd.Output()
 			if err != nil {
-				fail.Println("The indicate source branch/revision is unavailable:",
+				utils.Fail.Println(
+					"The indicate source branch/revision is unavailable:",
 					options.Source)
 				return
 			}
-			info.Println("Only committed files will be included in comparison to branch")
+			utils.Info.Println(
+				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Destination != "" {
 			// Handle the case of comparing two local files
 			// ...which were verified as existing in an earlier check
-			fmt.Println("XXX compare local files", options.Source, options.Destination)
+			compare("", options, userCfg, types.RawNames)
 		} else {
 			// Handle default case of comparing HEAD to current files
 			cmd := exec.Command("git", "status")
 			out, err = cmd.Output()
 			if err != nil {
-				fail.Println(err, "(probably not in a git directory)")
+				utils.Fail.Println(err, "(probably not in a git directory)")
 				return
 			}
 			parseGitStatus(out, options, userCfg)

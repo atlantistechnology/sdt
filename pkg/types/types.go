@@ -35,6 +35,14 @@ type (
 	}
 )
 
+type LineType int8
+
+const (
+	Status LineType = iota
+	CompactDiff
+	RawNames
+)
+
 // In places, github.com/fatih/color is used, but raw ANSI is easier
 // for writing custom reports based on sergi/go-diff/diffmatchpatch
 var Colors Highlights = Highlights{

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -15,6 +16,12 @@ import (
 
 	"github.com/atlantistechnology/sdt/pkg/types"
 )
+
+var Fail *log.Logger = log.New(os.Stderr,
+	types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
+
+var Info *log.Logger = log.New(os.Stderr,
+	types.Colors.Info+"INFO: "+types.Colors.Clear, 0)
 
 type lineOffset struct {
 	start uint32
@@ -105,11 +112,28 @@ func SemanticChanges(
 	var gitDiff []byte
 	var err error
 
-	// What git thinks has changed in actual source since last push
-	cmdGitDiff := exec.Command("git", "diff", filename)
-	gitDiff, err = cmdGitDiff.Output()
-	if err != nil {
-		log.Fatal(err)
+	// In arguably too much cleverness, a filename like "A -> B" marks
+	// comparison of two local files rather than to git branch/revision
+	reLocalFiles := regexp.MustCompile(` -> `)
+	if reLocalFiles.MatchString(filename) {
+		fileNames := strings.Split(filename, " -> ")
+		file1 := fileNames[0]
+		file2 := fileNames[1]
+		// System `diff` exits with non-zero status 1 for diff found
+		cmdDiff := exec.Command("diff", "-u", file1, file2)
+		// Misnomer of `gitDiff`, but we keep it consistent with other uses
+		gitDiff, err = cmdDiff.Output()
+		if err != nil && err.Error() != "exit status 1" {
+			Fail.Println("Could not perform local diff on", file1, file2)
+		}
+	} else {
+		// What git thinks has changed in actual source since last push
+		cmdGitDiff := exec.Command("git", "diff", filename)
+		gitDiff, err = cmdGitDiff.Output()
+		if err != nil {
+			Fail.Println("Could not peform git diff against local files")
+			log.Fatal(err)
+		}
 	}
 
 	// Determine the changes to the respective parse trees
