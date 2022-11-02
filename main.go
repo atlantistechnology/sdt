@@ -259,8 +259,8 @@ func getOptions() types.Options {
 
 func main() {
 	// Announce to STDERR if cannot run the specified command
-	fail := log.New(os.Stderr,
-		types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
+	fail := log.New(os.Stderr, types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
+	info := log.New(os.Stderr, types.Colors.Info+"INFO: "+types.Colors.Clear, 0)
 
 	// Process all flags and subcommands provided
 	options := getOptions()
@@ -349,6 +349,8 @@ func main() {
 		},
 	}
 
+	// The call to consistentOptions() has already ruled out cases that are
+	// generally impermissible. This limits the if predicates needed here.
 	if options.Status || options.Semantic || options.Parsetree {
 		if strings.HasSuffix(options.Destination, ":") {
 			// Handle case of two branches/revisions given for -A/-B
@@ -361,11 +363,27 @@ func main() {
 					options.Source, options.Destination)
 				return
 			}
+			info.Println("Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Source != "HEAD:" {
-			fmt.Println("XXX Will only compare revision to committed files")
+			// Handle case of comparing source branch/revision to HEAD
+			cmd := exec.Command("git", "diff", "--compact-summary",
+				options.Source, "HEAD:",
+			)
+			out, err = cmd.Output()
+			if err != nil {
+				fail.Println("The indicate source branch/revision is unavailable:",
+					options.Source)
+				return
+			}
+			info.Println("Only committed files will be included in comparison to branch")
+			fmt.Println("XXX\n" + string(out))
+		} else if options.Destination != "" {
+			// Handle the case of comparing two local files
+			// ...which were verified as existing in an earlier check
+			fmt.Println("XXX compare local files", options.Source, options.Destination)
 		} else {
-			// Handle default case of comparing current files to HEAD:
+			// Handle default case of comparing HEAD to current files
 			cmd := exec.Command("git", "status")
 			out, err = cmd.Output()
 			if err != nil {

@@ -10,16 +10,16 @@ def pow(a, b):
     return power
 
 
+def sub(a, b):
+    "Subtract a number from another number"
+    diff = a-b
+    return diff
+
+
 def mul(a, b):
     "Multiply two numbers together"
     product = a * b
     return product
-
-
-def div(a, b):
-    "Divide a number by another number"
-    ratio = a//b
-    return ratio
 
 
 def less(a, b):
@@ -34,7 +34,7 @@ def more(a, b):
     return big
 
 
-def sub(a, b):
-    "Subtract a number from another number"
-    diff = a-b
-    return diff
+def div(a, b):
+    "Divide a number by another number"
+    ratio = a//b
+    return ratio
