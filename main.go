@@ -155,7 +155,14 @@ func consistentOptions(options types.Options) string {
 	} else {
 		if dst == "" || strings.HasSuffix(dst, ":") {
 			return "A source of a filepath must be matched by a destination filepath"
-		}
+		} else {
+            if _, err := os.Stat(src); err != nil {
+                return "The file " + src + " does not exist!"
+            }
+            if _, err := os.Stat(dst); err != nil {
+                return "The file " + dst + " does not exist!"
+            }
+        }
 	}
 
 	return "HAPPY"
