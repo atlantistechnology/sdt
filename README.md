@@ -77,18 +77,19 @@ three tool.
 % git diff
 ```
 
-![git diff](assets/img/diff-python-git.png)
+<img src="assets/img/diff-python-git.png" alt="git diff" width="50%"/>
 
 ```
 % GIT_EXTERNAL_DIFF='difft --display=inline' git diff
 ```
 
-![difft as GIT_EXTERNAL_DIFF](assets/img/difft-python-git.png)
+<img src="assets/img/difft-python-git.png" alt="difft as GIT_EXTERNAL_DIFF" width="50%"/>
 
 ```
 % sdt semantic
 ```
-![sdt semantic](assets/img/sdt-python-git.png)
+
+<img src="assets/img/sdt-python-git.png" alt="sdt semantic" width="50%/">
 
 ### AST Explorer
 
