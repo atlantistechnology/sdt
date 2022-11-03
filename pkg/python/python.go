@@ -1,4 +1,4 @@
-package ruby
+package python
 
 import (
 	"fmt"
@@ -14,12 +14,11 @@ import (
 )
 
 func simplifyParseTree(parseTree string) string {
-	mod1 := parseTree
-	reLocation := regexp.MustCompile(`(?m)\(line:.*$[\r\n]*`)
-	mod2 := reLocation.ReplaceAllString(mod1, "\n")
-	reStrip := regexp.MustCompile(`(?m)^# `)
-	mod3 := reStrip.ReplaceAllString(mod2, "")
-	return mod3
+	reLineNo := regexp.MustCompile(`(?m)lineno=\d+`)
+	mod1 := reLineNo.ReplaceAllString(parseTree, "lineno=?")
+	reOffset := regexp.MustCompile(`(?m)offset=\d+`)
+	mod2 := reOffset.ReplaceAllString(mod1, "offset=?")
+	return mod2
 }
 
 func Diff(filename string, options types.Options, config types.Config) string {
@@ -27,11 +26,11 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var head []byte
 	var headTree []byte
 	var err error
-	rubyCmd := config.Commands["ruby"].Executable
-	switches := append(config.Commands["ruby"].Switches, filename)
+	pythonCmd := config.Commands["python"].Executable
+	switches := append(config.Commands["python"].Switches, filename)
 
 	// Get the AST for the current version of the file
-	cmdCurrentTree := exec.Command(rubyCmd, switches...)
+	cmdCurrentTree := exec.Command(pythonCmd, switches...)
 	currentTree, err = cmdCurrentTree.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +43,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		log.Fatal(err)
 	}
 
-	tmpfile, err := os.CreateTemp("", "*.rb")
+	tmpfile, err := os.CreateTemp("", "*.py")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,8 +51,8 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	defer os.Remove(tmpfile.Name()) // clean up
 
 	// Get the AST for the HEAD version of the file
-	switches = append(config.Commands["ruby"].Switches, tmpfile.Name())
-	cmdHeadTree := exec.Command(rubyCmd, switches...)
+	switches = append(config.Commands["python"].Switches, tmpfile.Name())
+	cmdHeadTree := exec.Command(pythonCmd, switches...)
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -68,14 +67,14 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	diffs := dmp.DiffMain(headTreeString, currentTreeString, false)
 
 	if options.Parsetree {
-		return utils.ColorDiff(dmp, diffs, types.Ruby, options.Dumbterm)
+		return utils.ColorDiff(dmp, diffs, types.Python, options.Dumbterm)
 	}
 
 	if options.Semantic {
 		return utils.SemanticChanges(
 			dmp, diffs, filename,
 			headTree, headTreeString,
-			types.Ruby, options.Dumbterm,
+			types.Python, options.Dumbterm,
 		)
 	}
 

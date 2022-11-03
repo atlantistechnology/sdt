@@ -23,6 +23,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/fatih/color"
 
+	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
 	"github.com/atlantistechnology/sdt/pkg/types"
@@ -37,6 +38,7 @@ const usage = `Usage of Semantic Diff Tool (sdt):
   parsetree, -p   Full syntax tree differences (where applicable)
   -g, --glob      Limit compared files by a glob pattern
   -v, --verbose   Show verbose output on STDERR
+  -d, --dumbterm  Monochrome/pipe compatible output (also env CI=true)
   -h, --help      Display this help screen
 
   If not specified, comparisons are between current changes and HEAD.
@@ -66,7 +68,7 @@ func astCompare(line string, options types.Options, config types.Config) {
 			diffColor.Println(ruby.Diff(filename, options, config))
 		case ".py":
 			// Something with `ast` module
-			diffColor.Println("| Comparison of Python ASTs")
+			diffColor.Println(python.Diff(filename, options, config))
 		case ".sql":
 			// sqlformat --reindent_aligned --identifiers lower --strip-comments --keywords upper
 			diffColor.Println(sql.Diff(filename, options, config))
@@ -165,6 +167,10 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Show verbose output on STDERR")
 	flag.BoolVar(&verbose, "v", false, "Show verbose output on STDERR")
 
+	var dumbterm bool
+	flag.BoolVar(&dumbterm, "dumbterm", false, "Monochrome/pipe compatible output")
+	flag.BoolVar(&dumbterm, "d", false, "Monochrome/pipe compatible output")
+
 	var src string
 	flag.StringVar(&src, "src", "HEAD:", "File, branch, or revision of source")
 	flag.StringVar(&src, "A", "HEAD:", "File, branch, or revision of source")
@@ -185,6 +191,10 @@ func main() {
 		parsetree = true
 	}
 
+	if os.Getenv("CI") == "true" {
+		dumbterm = true
+	}
+
 	// Create a struct with the command-line configured options
 	options := types.Options{
 		Status:      status,
@@ -192,6 +202,7 @@ func main() {
 		Parsetree:   parsetree,
 		Glob:        glob,
 		Verbose:     verbose,
+		Dumbterm:    dumbterm,
 		Source:      src,
 		Destination: dst,
 	}
@@ -269,6 +280,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", parsetree)
 		fmt.Fprintf(os.Stderr, "glob: %s\n", glob)
+		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", dumbterm)
 		fmt.Fprintf(os.Stderr, "python: %s %s\n", python.Executable, python.Switches)
 		fmt.Fprintf(os.Stderr, "ruby: %s %s\n", ruby.Executable, ruby.Switches)
 		fmt.Fprintf(os.Stderr, "sql: %s %s\n", sql.Executable, sql.Switches)

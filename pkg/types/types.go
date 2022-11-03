@@ -7,6 +7,7 @@ type (
 		Semantic    bool
 		Parsetree   bool
 		Glob        string
+		Dumbterm    bool
 		Verbose     bool
 		Source      string
 		Destination string
@@ -22,12 +23,53 @@ type (
 		Executable string   `toml:"executable"`
 		Switches   []string `toml:"switches"`
 	}
+
+	Highlights struct {
+		Add     string
+		Del     string
+		Header  string
+		Info    string
+		Clear   string
+		Neutral string
+	}
 )
 
 // In places, github.com/fatih/color is used, but raw ANSI is easier
 // for writing custom reports based on sergi/go-diff/diffmatchpatch
-var CYAN string = "\x1b[36m"
-var YELLOW string = "\x1b[33m"
-var GREEN string = "\x1b[32m"
-var RED string = "\x1b[31m"
-var CLEAR string = "\x1b[0m"
+var Colors Highlights = Highlights{
+	Add:     "\x1b[32m", // green
+	Del:     "\x1b[31m", // red
+	Header:  "\x1b[33m", // yellow
+	Info:    "\x1b[36m", // cyan
+	Clear:   "\x1b[0m",
+	Neutral: "",
+}
+
+var Dumbterm Highlights = Highlights{
+	Add:     "{{+",
+	Del:     "{{-",
+	Header:  "",
+	Info:    "",
+	Clear:   "}}",
+	Neutral: "{{_",
+}
+
+var PlainASCII Highlights = Highlights{
+	Add:     "",
+	Del:     "",
+	Header:  "",
+	Info:    "",
+	Clear:   "",
+	Neutral: "",
+}
+
+// Keep "enum" of types of parse trees we can handle here (<=256 for now)
+type ParseType uint8
+
+const (
+	Ruby ParseType = iota
+	Python
+	JavaScript
+	Golang
+	SomeOtherLanguage
+)
