@@ -29,7 +29,7 @@ steps you'd take.
 * What identifies a FizzBuzz source file.  For now, we only look at file
   extensions, so suppose FizzBuzz fils use the extension `*.fzb`.
 
-  In `$ROOT/main.go` is a `switch ext` within `astCompare()`.  Within a
+  In `$ROOT/main.go` is a `switch ext` within `compareFileType()`.  Within a
   `case` of that switch, you'll see a call similar to:
 
     ruby.Diff(filename, options, config)
