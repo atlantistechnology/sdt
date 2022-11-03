@@ -28,9 +28,10 @@ decisions on whether to accept a given change.
 It would be nice to integrate `sdt` as a git subcommand, which should be
 straightforward.
 
-It would also be nice to allow `sdt` to be used an integration or extension to 
-GitHub or other collaborative development services (Bitbucket, GitLab, etc) such 
-that views of pull requests could be accompanied by the analysis `sdt` provides.
+It would also be nice to allow `sdt` to be used as an integration or extension 
+to GitHub or other collaborative development services (Bitbucket, GitLab, etc) 
+such that views of pull requests could be accompanied by the analysis `sdt` 
+provides.
 
 ## Related tools
 
