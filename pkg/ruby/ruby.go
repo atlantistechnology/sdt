@@ -1,8 +1,6 @@
 package ruby
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -23,40 +21,49 @@ func simplifyParseTree(parseTree string) string {
 }
 
 func Diff(filename string, options types.Options, config types.Config) string {
+	var headTree []byte
 	var currentTree []byte
 	var head []byte
-	var headTree []byte
 	var err error
 	rubyCmd := config.Commands["ruby"].Executable
-	switches := append(config.Commands["ruby"].Switches, filename)
+	switches := config.Commands["ruby"].Switches
 
-	// Get the AST for the current version of the file
-	cmdCurrentTree := exec.Command(rubyCmd, switches...)
-	currentTree, err = cmdCurrentTree.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if filename == "" {
+		filename, headTree, currentTree = utils.LocalFileTrees(
+			rubyCmd, switches, options, "Ruby", false)
+		utils.Info("Comparing local files: %s", filename)
+	} else {
+		// Get the AST for the current version of the file
+		cmdCurrentTree := exec.Command(rubyCmd,
+			append(switches, filename)...)
+		currentTree, err = cmdCurrentTree.Output()
+		if err != nil {
+			utils.Fail("Could not create Ruby parse tree for %s", filename)
+		}
 
-	// Retrieve the HEAD version of the file to a temporary filename
-	cmdHead := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", filename))
-	head, err = cmdHead.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+		// Retrieve the HEAD version of the file to a temporary filename
+		cmdHead := exec.Command("git", "show", options.Source+filename)
+		head, err = cmdHead.Output()
+		if err != nil {
+			utils.Fail(
+				"Unable to retrieve file %s from branch/revision %s",
+				filename, options.Source)
+		}
 
-	tmpfile, err := os.CreateTemp("", "*.rb")
-	if err != nil {
-		log.Fatal(err)
-	}
-	tmpfile.Write(head)
-	defer os.Remove(tmpfile.Name()) // clean up
+		tmpfile, err := os.CreateTemp("", "*.rb")
+		if err != nil {
+			utils.Fail("Could not create a temporary Ruby file")
+		}
+		tmpfile.Write(head)
+		defer os.Remove(tmpfile.Name()) // clean up
 
-	// Get the AST for the HEAD version of the file
-	switches = append(config.Commands["ruby"].Switches, tmpfile.Name())
-	cmdHeadTree := exec.Command(rubyCmd, switches...)
-	headTree, err = cmdHeadTree.Output()
-	if err != nil {
-		log.Fatal(err)
+		// Get the AST for the HEAD version of the file
+		cmdHeadTree := exec.Command(rubyCmd,
+			append(switches, tmpfile.Name())...)
+		headTree, err = cmdHeadTree.Output()
+		if err != nil {
+			utils.Fail("Could not create Ruby parse tree for %s", tmpfile.Name())
+		}
 	}
 
 	// Make the trees into slightly simpler string representation

@@ -2,7 +2,6 @@ package sql
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -75,35 +74,43 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var headCanonical []byte
 	var err error
 	sqlCmd := config.Commands["sql"].Executable
-	switches := append(config.Commands["sql"].Switches, filename)
+	switches := config.Commands["sql"].Switches
 
-	// Get the AST for the current version of the file
-	cmdCurrentCanonical := exec.Command(sqlCmd, switches...)
-	currentCanonical, err = cmdCurrentCanonical.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if filename == "" {
+		// Function name is slight misnomer since we use `canonical=true`
+		filename, headCanonical, currentCanonical = utils.LocalFileTrees(
+			sqlCmd, switches, options, "SQL", true)
+		utils.Info("Comparing local files: %s", filename)
+	} else {
+		// Get the AST for the current version of the file
+		cmdCurrentCanonical := exec.Command(sqlCmd, append(switches, filename)...)
+		currentCanonical, err = cmdCurrentCanonical.Output()
+		if err != nil {
+			utils.Fail("Could not create canonical SQL for %s", filename)
+		}
 
-	// Retrieve the HEAD version of the file to a temporary filename
-	cmdHead := exec.Command("git", "show", "HEAD:"+filename)
-	head, err = cmdHead.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+		// Retrieve the HEAD version of the file to a temporary filename
+		cmdHead := exec.Command("git", "show", options.Source+filename)
+		head, err = cmdHead.Output()
+		if err != nil {
+			utils.Fail(
+				"Unable to retrieve file %s from branch/revision %s",
+				filename, options.Source)
+		}
 
-	tmpfile, err := os.CreateTemp("", "*.sql")
-	if err != nil {
-		log.Fatal(err)
-	}
-	tmpfile.Write(head)
-	defer os.Remove(tmpfile.Name()) // clean up
+		tmpfile, err := os.CreateTemp("", "*.sql")
+		if err != nil {
+			utils.Fail("Could not create a temporary SQL file")
+		}
+		tmpfile.Write(head)
+		defer os.Remove(tmpfile.Name()) // clean up
 
-	// Get the AST for the HEAD version of the file
-	switches = append(config.Commands["sql"].Switches, tmpfile.Name())
-	cmdHeadCanonical := exec.Command(sqlCmd, switches...)
-	headCanonical, err = cmdHeadCanonical.Output()
-	if err != nil {
-		log.Fatal(err)
+		// Get the AST for the HEAD version of the file
+		cmdHeadCanonical := exec.Command(sqlCmd, append(switches, tmpfile.Name())...)
+		headCanonical, err = cmdHeadCanonical.Output()
+		if err != nil {
+			utils.Fail("Could not create canonical SQL for %s", tmpfile.Name())
+		}
 	}
 
 	// Perform the diff between the versions

@@ -1,8 +1,6 @@
 package python
 
 import (
-	//"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -26,52 +24,35 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var head []byte
 	var headTree []byte
 	var err error
-	var pythonCmd string = config.Commands["python"].Executable
-	var switches []string = config.Commands["python"].Switches
+	pythonCmd := config.Commands["python"].Executable
+	switches := config.Commands["python"].Switches
 
 	if filename == "" {
-		filename = options.Source + " -> " + options.Destination
-		utils.Info.Println("Comparing local files: " + filename)
-		//-- Empty filename compares options.Source and options.Destination --
-		// The prefixes "head" and "current" are slight misnomers here
-		cmdHeadTree := exec.Command(pythonCmd,
-			append(switches, options.Source)...,
-		)
-		headTree, err = cmdHeadTree.Output()
-		if err != nil {
-			utils.Fail.Println("Could not create parse tree for " + options.Source)
-			log.Fatal(err)
-		}
-
-		cmdCurrentTree := exec.Command(pythonCmd,
-			append(switches, options.Destination)...,
-		)
-		currentTree, err = cmdCurrentTree.Output()
-		if err != nil {
-			utils.Fail.Println("Could not create parse tree for " + options.Destination)
-			log.Fatal(err)
-		}
+		filename, headTree, currentTree = utils.LocalFileTrees(
+			pythonCmd, switches, options, "Python", false)
+		utils.Info("Comparing local files: %s", filename)
 	} else {
 		//-- Comparing a branch/revision to current local file --
 		// Get the AST for the current version of the file
 		cmdCurrentTree := exec.Command(pythonCmd,
-			append(switches, filename)...,
-		)
+			append(switches, filename)...)
 		currentTree, err = cmdCurrentTree.Output()
 		if err != nil {
-			log.Fatal(err)
+			utils.Fail("Could not create Python parse tree for %s", filename)
 		}
 
 		// Retrieve the HEAD version of the file to a temporary filename
 		cmdHead := exec.Command("git", "show", options.Source+filename)
 		head, err = cmdHead.Output()
 		if err != nil {
-			log.Fatal(err)
+			utils.Fail(
+				"Unable to retrieve file %s from branch/revision %s",
+				filename, options.Source)
 		}
 
 		tmpfile, err := os.CreateTemp("", "*.py")
 		if err != nil {
-			log.Fatal(err)
+			utils.Fail("Could not create a temporary Python file")
 		}
 		tmpfile.Write(head)
 		defer os.Remove(tmpfile.Name()) // clean up
@@ -82,7 +63,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		)
 		headTree, err = cmdHeadTree.Output()
 		if err != nil {
-			log.Fatal(err)
+			utils.Fail("Could not create Python parse tree for %s", tmpfile.Name())
 		}
 	}
 

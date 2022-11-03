@@ -103,7 +103,9 @@ func compare(
 		ext := filepath.Ext(options.Source)
 		ext2 := filepath.Ext(options.Destination)
 		if ext != ext2 {
-			utils.Info.Println("File extensions mismatch, assuming type of source")
+			utils.Info(
+				"File extensions mismatch, assuming source type '%s', not '%s'",
+				ext, ext2)
 		}
 		// We allow a slight cleverness of an empty filename meaning that
 		// the comparison is between options.Source and options.Destination
@@ -218,8 +220,7 @@ func getOptions() types.Options {
 		subcommand = os.Args[1]
 		// Bad attempt at second subcommand
 		if os.Args[2][0] != '-' {
-			utils.Fail.Println("Only one subcommand may be specified")
-			os.Exit(-1)
+			utils.Fail("Only one subcommand may be specified: \n\t%v", os.Args)
 		}
 		os.Args = append(os.Args[:1], os.Args[2:]...)
 	}
@@ -288,8 +289,7 @@ func main() {
 	options := getOptions()
 	checkOpts := consistentOptions(options)
 	if checkOpts != "HAPPY" {
-		utils.Fail.Println(checkOpts)
-		return
+		utils.Fail(checkOpts)
 	}
 
 	// Configure default tools that might be overrridden by the TOML config
@@ -381,11 +381,11 @@ func main() {
 			)
 			out, err = cmd.Output()
 			if err != nil {
-				utils.Fail.Println("One or both revisions are unavailable:",
+				utils.Fail(
+					"One or both revisions are unavailable: %s, %s",
 					options.Source, options.Destination)
-				return
 			}
-			utils.Info.Println(
+			utils.Info(
 				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Source != "HEAD:" && options.Destination == "" {
@@ -395,12 +395,11 @@ func main() {
 			)
 			out, err = cmd.Output()
 			if err != nil {
-				utils.Fail.Println(
-					"The indicate source branch/revision is unavailable:",
+				utils.Fail(
+					"The indicate source branch/revision is unavailable: %s",
 					options.Source)
-				return
 			}
-			utils.Info.Println(
+			utils.Info(
 				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Destination != "" {
@@ -412,8 +411,7 @@ func main() {
 			cmd := exec.Command("git", "status")
 			out, err = cmd.Output()
 			if err != nil {
-				utils.Fail.Println(err, "(probably not in a git directory)")
-				return
+				utils.Fail("%s %s", err, "(probably not in a git directory)")
 			}
 			parseGitStatus(out, options, userCfg)
 		}

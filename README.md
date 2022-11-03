@@ -25,12 +25,22 @@ decisions on whether to accept a given change.
 
 ## Future plans
 
-It would be nice to integrate `sdt` as a git subcommand, which should be fairly
-straightforward.  
+It would be nice to integrate `sdt` as a git subcommand, which should be
+straightforward.
 
 It would also be nice to allow `sdt` to be used an integration or extension to 
 GitHub or other collaborative development services (Bitbucket, GitLab, etc) such 
 that views of pull requests could be accompanied by the analysis `sdt` provides.
+
+## Related tools
+
+### Difftastic
+
+[Difftastic](https://github.com/Wilfred/difftastic) (`difft`) serves a largely
+overlapping purpose to `sdt`.  Difftastic builds on the substantial and
+longstanding work in [tree-sitter](https://github.com/tree-sitter/tree-sitter),
+which is a parser generator tool for which grammars and interfaces have been
+created.
 
 # Supported languages
 

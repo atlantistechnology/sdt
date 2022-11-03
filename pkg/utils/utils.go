@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -17,11 +16,16 @@ import (
 	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
-var Fail *log.Logger = log.New(os.Stderr,
-	types.Colors.Info+"ERROR: "+types.Colors.Clear, 0)
+func Fail(msg string, params ...interface{}) {
+	msg = types.Colors.Info + "ERROR: " + types.Colors.Clear + msg + "\n"
+	fmt.Fprintf(os.Stderr, msg, params...)
+	os.Exit(-1)
+}
 
-var Info *log.Logger = log.New(os.Stderr,
-	types.Colors.Info+"INFO: "+types.Colors.Clear, 0)
+func Info(msg string, params ...interface{}) {
+	msg = types.Colors.Info + "INFO: " + types.Colors.Clear + msg + "\n"
+	fmt.Fprintf(os.Stderr, msg, params...)
+}
 
 type lineOffset struct {
 	start uint32
@@ -124,15 +128,14 @@ func SemanticChanges(
 		// Misnomer of `gitDiff`, but we keep it consistent with other uses
 		gitDiff, err = cmdDiff.Output()
 		if err != nil && err.Error() != "exit status 1" {
-			Fail.Println("Could not perform local diff on", file1, file2)
+			Fail("Could not perform local diff on %s -> %s", file1, file2)
 		}
 	} else {
 		// What git thinks has changed in actual source since last push
 		cmdGitDiff := exec.Command("git", "diff", filename)
 		gitDiff, err = cmdGitDiff.Output()
 		if err != nil {
-			Fail.Println("Could not peform git diff against local files")
-			log.Fatal(err)
+			Fail("Could not peform git diff against local files")
 		}
 	}
 
@@ -342,3 +345,44 @@ func changedGitSegments(
 	}
 	return BufferToDiff(buff, true)
 }
+
+func LocalFileTrees(
+	cmd string,
+	switches []string,
+	options types.Options,
+	langName string,
+	canonical bool) (string, []byte, []byte) {
+
+	var headTree []byte
+	var currentTree []byte
+	var err error
+
+	filename := options.Source + " -> " + options.Destination
+	//-- Empty filename compares options.Source and options.Destination --
+	// The prefixes "head" and "current" are slight misnomers here
+	cmdHeadTree := exec.Command(cmd, append(switches, options.Source)...)
+	headTree, err = cmdHeadTree.Output()
+	if err != nil {
+		if canonical {
+			Fail("Could not create canonical %s for %s", 
+				langName, options.Source)
+		} else {
+			Fail("Could not create %s parse tree for %s",
+				langName, options.Source)
+		}
+	}
+
+	cmdCurrentTree := exec.Command(cmd, append(switches, options.Destination)...)
+	currentTree, err = cmdCurrentTree.Output()
+	if err != nil {
+		if canonical {
+			Fail("Could not create canonical %s for %s",
+				langName, options.Destination)
+		} else {
+			Fail("Could not create %s parse tree for %s",
+				langName, options.Destination)
+		}
+	}
+	return filename, headTree, currentTree
+}
+
