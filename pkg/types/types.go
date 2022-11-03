@@ -22,6 +22,7 @@ type (
 	Command struct {
 		Executable string   `toml:"executable"`
 		Switches   []string `toml:"switches"`
+		Options    string   `toml:"options"`
 	}
 
 	Highlights struct {
@@ -32,6 +33,14 @@ type (
 		Clear   string
 		Neutral string
 	}
+)
+
+type LineType int8
+
+const (
+	Status LineType = iota
+	CompactDiff
+	RawNames
 )
 
 // In places, github.com/fatih/color is used, but raw ANSI is easier

@@ -1,8 +1,6 @@
 package python
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -27,35 +25,46 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var headTree []byte
 	var err error
 	pythonCmd := config.Commands["python"].Executable
-	switches := append(config.Commands["python"].Switches, filename)
+	switches := config.Commands["python"].Switches
 
-	// Get the AST for the current version of the file
-	cmdCurrentTree := exec.Command(pythonCmd, switches...)
-	currentTree, err = cmdCurrentTree.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if filename == "" {
+		filename, headTree, currentTree = utils.LocalFileTrees(
+			pythonCmd, switches, options, "Python", false)
+		utils.Info("Comparing local files: %s", filename)
+	} else {
+		//-- Comparing a branch/revision to current local file --
+		// Get the AST for the current version of the file
+		cmdCurrentTree := exec.Command(pythonCmd,
+			append(switches, filename)...)
+		currentTree, err = cmdCurrentTree.Output()
+		if err != nil {
+			utils.Fail("Could not create Python parse tree for %s", filename)
+		}
 
-	// Retrieve the HEAD version of the file to a temporary filename
-	cmdHead := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", filename))
-	head, err = cmdHead.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+		// Retrieve the HEAD version of the file to a temporary filename
+		cmdHead := exec.Command("git", "show", options.Source+filename)
+		head, err = cmdHead.Output()
+		if err != nil {
+			utils.Fail(
+				"Unable to retrieve file %s from branch/revision %s",
+				filename, options.Source)
+		}
 
-	tmpfile, err := os.CreateTemp("", "*.py")
-	if err != nil {
-		log.Fatal(err)
-	}
-	tmpfile.Write(head)
-	defer os.Remove(tmpfile.Name()) // clean up
+		tmpfile, err := os.CreateTemp("", "*.py")
+		if err != nil {
+			utils.Fail("Could not create a temporary Python file")
+		}
+		tmpfile.Write(head)
+		defer os.Remove(tmpfile.Name()) // clean up
 
-	// Get the AST for the HEAD version of the file
-	switches = append(config.Commands["python"].Switches, tmpfile.Name())
-	cmdHeadTree := exec.Command(pythonCmd, switches...)
-	headTree, err = cmdHeadTree.Output()
-	if err != nil {
-		log.Fatal(err)
+		// Get the AST for the HEAD version of the file
+		cmdHeadTree := exec.Command(pythonCmd,
+			append(switches, tmpfile.Name())...,
+		)
+		headTree, err = cmdHeadTree.Output()
+		if err != nil {
+			utils.Fail("Could not create Python parse tree for %s", tmpfile.Name())
+		}
 	}
 
 	// Make the trees into slightly simpler string representation
