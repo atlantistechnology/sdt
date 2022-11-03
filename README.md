@@ -105,7 +105,7 @@ third-party JS parsers that AST Explorer utilizes are often poor, and fail to
 recognize many commonplace constructs of the languages they respectively
 process.  AST Explorer itself exposes a very nice [web-based front
 end](https://astexplorer.net/), but beyond the sample files of many source
-languages it provides tool often fails to parse valid source code.
+languages it provides, the tool often fails to parse valid source code.
 
 # Supported languages
 
