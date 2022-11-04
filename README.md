@@ -135,20 +135,20 @@ for versions that will be created in the future and do not yet exist).
 
 ## Ruby
 
-Initial support created.  Supports both --semantic and --parsetree flags.
+Initial support created.  Supports both `semantic` and `parsetree` subcommands.
 
 Only a `ruby` interpreter is required (by default)
 
 ## Python
 
-Initial support created.  Supports both --semantic and --parsetree flags.
+Initial support created.  Supports both `semantic` and `parsetree` subcommands.
 
 Only a `python` interpreter is required (by default)
 
 ## SQL
 
 Initial support created.  Uses canonicalization rather than parsing, so
-only the --semantic flag is supported.
+only the `semantic` subcommand is supported.
 
 Requires the tool `sqlformat` (by default).  See:
 
@@ -157,7 +157,7 @@ Requires the tool `sqlformat` (by default).  See:
 
 ## JavaScript
 
-TODO.  Supports both --semantic and --parsetree flags.
+TODO.  Supports both `semantic` and `parsetree` subcommands.
 
 Requires the `node` interpreter and the library `acorn` (by default). See:
 

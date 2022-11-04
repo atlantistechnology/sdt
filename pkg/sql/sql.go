@@ -2,8 +2,6 @@ package sql
 
 import (
 	"bytes"
-	"os"
-	"os/exec"
 	"regexp"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -61,56 +59,31 @@ func colorDiff(
 		}
 	}
 	if changed {
-		report := utils.BufferToDiff(buff, true)
-		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
-		return reCleanupDumbterm.ReplaceAllString(report, "")
+		return utils.BufferToDiff(buff, true, dumbterm)
 	}
+
 	return "| No semantic differences detected"
 }
 
 func Diff(filename string, options types.Options, config types.Config) string {
 	var currentCanonical []byte
-	var head []byte
 	var headCanonical []byte
-	var err error
+
 	sqlCmd := config.Commands["sql"].Executable
 	switches := config.Commands["sql"].Switches
+	canonical := true // Canonicalize rather than use parse tree
 
 	if filename == "" {
+		//-- Comparison of two local files
 		// Function name is slight misnomer since we use `canonical=true`
 		filename, headCanonical, currentCanonical = utils.LocalFileTrees(
 			sqlCmd, switches, options, "SQL", true)
 		utils.Info("Comparing local files: %s", filename)
 	} else {
-		// Get the AST for the current version of the file
-		cmdCurrentCanonical := exec.Command(sqlCmd, append(switches, filename)...)
-		currentCanonical, err = cmdCurrentCanonical.Output()
-		if err != nil {
-			utils.Fail("Could not create canonical SQL for %s", filename)
-		}
-
-		// Retrieve the HEAD version of the file to a temporary filename
-		cmdHead := exec.Command("git", "show", options.Source+filename)
-		head, err = cmdHead.Output()
-		if err != nil {
-			utils.Fail(
-				"Unable to retrieve file %s from branch/revision %s",
-				filename, options.Source)
-		}
-
-		tmpfile, err := os.CreateTemp("", "*.sql")
-		if err != nil {
-			utils.Fail("Could not create a temporary SQL file")
-		}
-		tmpfile.Write(head)
-		defer os.Remove(tmpfile.Name()) // clean up
-
-		// Get the AST for the HEAD version of the file
-		cmdHeadCanonical := exec.Command(sqlCmd, append(switches, tmpfile.Name())...)
-		headCanonical, err = cmdHeadCanonical.Output()
-		if err != nil {
-			utils.Fail("Could not create canonical SQL for %s", tmpfile.Name())
-		}
+		//-- Comparison of a branch/revision to a current file
+		// Function name is slight misnomer since we use `canonical=true`
+		headCanonical, currentCanonical = utils.RevisionToCurrentTree(
+			filename, sqlCmd, switches, options, "SQL", canonical)
 	}
 
 	// Perform the diff between the versions

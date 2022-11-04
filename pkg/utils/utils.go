@@ -92,7 +92,20 @@ func Max[T constraints.Ordered](a, b T) T {
 	return b
 }
 
-func BufferToDiff(buff bytes.Buffer, colorLeft bool) string {
+func BufferToDiff(buff bytes.Buffer, colorLeft bool, dumbterm bool) string {
+	if dumbterm {
+		// This can possibly be made slightly less special-case
+		ret := buff.String()
+		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
+		ret = reCleanupDumbterm.ReplaceAllString(ret, "")
+		reCleanDumb2 := regexp.MustCompile(`(?Us)({{[+-])([[:space:]]+)(}})`)
+		ret = reCleanDumb2.ReplaceAllString(ret, "$2")
+		rePrepend := regexp.MustCompile(`(?m)^`)
+		ret = rePrepend.ReplaceAllString(ret,
+			types.Colors.Header+"| "+types.Colors.Clear)
+		return ret
+	}
+
 	ret := buff.String()
 	rePrepend := regexp.MustCompile(`(?m)^`)
 	if colorLeft {
@@ -268,7 +281,7 @@ func ColorDiff(
 		}
 	}
 
-	report := BufferToDiff(buff, false)
+	report := BufferToDiff(buff, false, dumbterm)
 	if dumbterm {
 		// For dumb terminal/CI=true, do some cleanup
 		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
@@ -343,7 +356,7 @@ func changedGitSegments(
 			buff.WriteString("\n")
 		}
 	}
-	return BufferToDiff(buff, true)
+	return BufferToDiff(buff, true, dumbterm)
 }
 
 func LocalFileTrees(
@@ -364,11 +377,11 @@ func LocalFileTrees(
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {
 		if canonical {
-			Fail("Could not create canonical %s for %s", 
-				langName, options.Source)
+			Fail("Could not create canonical %s for %s (using '%s')",
+				langName, options.Source, cmd)
 		} else {
-			Fail("Could not create %s parse tree for %s",
-				langName, options.Source)
+			Fail("Could not create %s parse tree for %s (using '%s')",
+				langName, options.Source, cmd)
 		}
 	}
 
@@ -376,13 +389,69 @@ func LocalFileTrees(
 	currentTree, err = cmdCurrentTree.Output()
 	if err != nil {
 		if canonical {
-			Fail("Could not create canonical %s for %s",
-				langName, options.Destination)
+			Fail("Could not create canonical %s for %s (using '%s')",
+				langName, options.Destination, cmd)
 		} else {
-			Fail("Could not create %s parse tree for %s",
-				langName, options.Destination)
+			Fail("Could not create %s parse tree for %s (using '%s')",
+				langName, options.Destination, cmd)
 		}
 	}
 	return filename, headTree, currentTree
 }
 
+func RevisionToCurrentTree(
+	filename string,
+	cmd string,
+	switches []string,
+	options types.Options,
+	langName string,
+	canonical bool) ([]byte, []byte) {
+
+	var headTree []byte
+	var currentTree []byte
+	var head []byte
+	var err error
+
+	// Get the AST for the current version of the file
+	cmdCurrentTree := exec.Command(cmd, append(switches, filename)...)
+	currentTree, err = cmdCurrentTree.Output()
+	if err != nil {
+		if canonical {
+			Fail("Could not create canonical %s for %s (using '%s')",
+				langName, filename, cmd)
+		} else {
+			Fail("Could not create %s parse tree for %s (using '%s')",
+				langName, filename, cmd)
+		}
+	}
+
+	// Retrieve the HEAD version of the file to a temporary filename
+	cmdHead := exec.Command("git", "show", options.Source+filename)
+	head, err = cmdHead.Output()
+	if err != nil {
+		Fail("Unable to retrieve file %s from branch/revision %s",
+			filename, options.Source)
+	}
+
+	tmpfile, err := os.CreateTemp("", "*."+langName)
+	if err != nil {
+		Fail("Could not create a temporary %s file", langName)
+	}
+	tmpfile.Write(head)
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	// Get the AST for the HEAD version of the file
+	cmdHeadTree := exec.Command(cmd, append(switches, tmpfile.Name())...)
+	headTree, err = cmdHeadTree.Output()
+	if err != nil {
+		if canonical {
+			Fail("Could not create canonical %s for %s (using '%s')",
+				langName, tmpfile.Name(), cmd)
+		} else {
+			Fail("Could not create %s parse tree for %s (using '%s')",
+				langName, tmpfile.Name(), cmd)
+		}
+	}
+
+	return headTree, currentTree
+}

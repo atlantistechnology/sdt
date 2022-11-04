@@ -1,8 +1,6 @@
 package ruby
 
 import (
-	"os"
-	"os/exec"
 	"regexp"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -23,47 +21,20 @@ func simplifyParseTree(parseTree string) string {
 func Diff(filename string, options types.Options, config types.Config) string {
 	var headTree []byte
 	var currentTree []byte
-	var head []byte
-	var err error
+
 	rubyCmd := config.Commands["ruby"].Executable
 	switches := config.Commands["ruby"].Switches
+	canonical := false // Generate AST, don't canonicalize
 
 	if filename == "" {
+		//-- Comparison of two local files
 		filename, headTree, currentTree = utils.LocalFileTrees(
-			rubyCmd, switches, options, "Ruby", false)
+			rubyCmd, switches, options, "Ruby", canonical)
 		utils.Info("Comparing local files: %s", filename)
 	} else {
-		// Get the AST for the current version of the file
-		cmdCurrentTree := exec.Command(rubyCmd,
-			append(switches, filename)...)
-		currentTree, err = cmdCurrentTree.Output()
-		if err != nil {
-			utils.Fail("Could not create Ruby parse tree for %s", filename)
-		}
-
-		// Retrieve the HEAD version of the file to a temporary filename
-		cmdHead := exec.Command("git", "show", options.Source+filename)
-		head, err = cmdHead.Output()
-		if err != nil {
-			utils.Fail(
-				"Unable to retrieve file %s from branch/revision %s",
-				filename, options.Source)
-		}
-
-		tmpfile, err := os.CreateTemp("", "*.rb")
-		if err != nil {
-			utils.Fail("Could not create a temporary Ruby file")
-		}
-		tmpfile.Write(head)
-		defer os.Remove(tmpfile.Name()) // clean up
-
-		// Get the AST for the HEAD version of the file
-		cmdHeadTree := exec.Command(rubyCmd,
-			append(switches, tmpfile.Name())...)
-		headTree, err = cmdHeadTree.Output()
-		if err != nil {
-			utils.Fail("Could not create Ruby parse tree for %s", tmpfile.Name())
-		}
+		//-- Comparison of a branch/revision to a current file
+		headTree, currentTree = utils.RevisionToCurrentTree(
+			filename, rubyCmd, switches, options, "Ruby", canonical)
 	}
 
 	// Make the trees into slightly simpler string representation

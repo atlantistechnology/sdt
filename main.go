@@ -375,10 +375,9 @@ func main() {
 	// generally impermissible. This limits the if predicates needed here.
 	if options.Status || options.Semantic || options.Parsetree {
 		if strings.HasSuffix(options.Destination, ":") {
-			// Handle case of two branches/revisions given for -A/-B
+			//-- Handle case of two branches/revisions given for -A/-B
 			cmd := exec.Command("git", "diff", "--compact-summary",
-				options.Source, options.Destination,
-			)
+				options.Source, options.Destination)
 			out, err = cmd.Output()
 			if err != nil {
 				utils.Fail(
@@ -389,10 +388,9 @@ func main() {
 				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Source != "HEAD:" && options.Destination == "" {
-			// Handle case of comparing source branch/revision to dest HEAD
+			//-- Handle case of -A branch/revision given but no -B
 			cmd := exec.Command("git", "diff", "--compact-summary",
-				options.Source, "HEAD:",
-			)
+				options.Source, "HEAD:")
 			out, err = cmd.Output()
 			if err != nil {
 				utils.Fail(
@@ -403,11 +401,11 @@ func main() {
 				"Only committed files will be included in comparison to branch")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Destination != "" {
-			// Handle the case of comparing two local files
+			//-- Handle the case of comparing two local files
 			// ...which were verified as existing in an earlier check
 			compare("", options, userCfg, types.RawNames)
 		} else {
-			// Handle default case of comparing HEAD to current files
+			//-- Handle default case of comparing HEAD to current files
 			cmd := exec.Command("git", "status")
 			out, err = cmd.Output()
 			if err != nil {
