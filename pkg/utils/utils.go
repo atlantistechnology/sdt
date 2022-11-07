@@ -128,14 +128,15 @@ func SemanticChanges(
 
 	var gitDiff []byte
 	var err error
+	var file1, file2 string
 
 	// In arguably too much cleverness, a filename like "A -> B" marks
 	// comparison of two local files rather than to git branch/revision
 	reLocalFiles := regexp.MustCompile(` -> `)
 	if reLocalFiles.MatchString(filename) {
 		fileNames := strings.Split(filename, " -> ")
-		file1 := fileNames[0]
-		file2 := fileNames[1]
+		file1 = fileNames[0]
+		file2 = fileNames[1]
 		// System `diff` exits with non-zero status 1 for diff found
 		cmdDiff := exec.Command("diff", "-u", file1, file2)
 		// Misnomer of `gitDiff`, but we keep it consistent with other uses
@@ -145,6 +146,7 @@ func SemanticChanges(
 		}
 	} else {
 		// What git thinks has changed in actual source since last push
+		file1 = filename
 		cmdGitDiff := exec.Command("git", "diff", filename)
 		gitDiff, err = cmdGitDiff.Output()
 		if err != nil {
@@ -165,6 +167,7 @@ func SemanticChanges(
 	var newStart uint32
 	var newCount uint32
 	var lineOfInterest uint32
+	var posOfInterest uint32
 	var n int
 
 	offsets := MakeOffsetsFromString(headTreeString)
@@ -173,6 +176,10 @@ func SemanticChanges(
 	// Successive diffs will add or remove characters
 	adjustment := 0
 	diffLines := mapset.NewSet[uint32]()
+	diffPositions := mapset.NewSet[uint32]()
+	// Create set under assumption we'll need to put more in it
+	posNotLine := mapset.NewSet[types.ParseType]()
+	posNotLine.Add(types.JavaScript)
 
 	for i := 0; i < len(rangeLines); i++ {
 		n, _ = fmt.Sscanf(
@@ -220,7 +227,33 @@ func SemanticChanges(
 						diffLines.Add(lineOfInterest)
 					}
 				}
+			case types.JavaScript:
+				for j := minLine; j < maxLine; j++ {
+					line := string(treeLines[j])
+					reLeadingSpace := regexp.MustCompile("^[\n\r\t ]+")
+					line = reLeadingSpace.ReplaceAllString(line, "")
+					m, _ = fmt.Sscanf(line, `"start": %d"`, &posOfInterest)
+					if m == 1 {
+						diffPositions.Add(posOfInterest)
+					}
+					m, _ = fmt.Sscanf(line, `"end": %d"`, &posOfInterest)
+					if m == 1 {
+						diffPositions.Add(posOfInterest)
+					}
+				}
 			}
+		}
+	}
+
+	// Some parse types have byte postions in original file, not lines numbers
+	if posNotLine.Contains(parseType) {
+		data, err := os.ReadFile(file1)
+		if err != nil {
+			Fail("Unable to read local file %s", filename)
+		}
+		lineOffsets := MakeOffsetsFromByteArray(data)
+		for pos := range diffPositions.Iterator().C {
+			diffLines.Add(uint32(LineAtPosition(lineOffsets, pos)))
 		}
 	}
 
@@ -369,10 +402,8 @@ func LocalFileTrees(
 	var headTree []byte
 	var currentTree []byte
 	var err error
-
 	filename := options.Source + " -> " + options.Destination
-	//-- Empty filename compares options.Source and options.Destination --
-	// The prefixes "head" and "current" are slight misnomers here
+
 	cmdHeadTree := exec.Command(cmd, append(switches, options.Source)...)
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {

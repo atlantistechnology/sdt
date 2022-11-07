@@ -28,7 +28,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	if filename == "" {
 		//-- Comparison of two local files
 		filename, headTree, currentTree = utils.LocalFileTrees(
-			pythonCmd, switches, options, "Python", false)
+			pythonCmd, switches, options, "Python", canonical)
 		utils.Info("Comparing local files: %s", filename)
 	} else {
 		//-- Comparison of a branch/revision to a current file

@@ -77,7 +77,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		//-- Comparison of two local files
 		// Function name is slight misnomer since we use `canonical=true`
 		filename, headCanonical, currentCanonical = utils.LocalFileTrees(
-			sqlCmd, switches, options, "SQL", true)
+			sqlCmd, switches, options, "SQL", canonical)
 		utils.Info("Comparing local files: %s", filename)
 	} else {
 		//-- Comparison of a branch/revision to a current file

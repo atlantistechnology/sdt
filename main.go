@@ -313,15 +313,16 @@ func main() {
 		},
 		Options: "",
 	}
-	jsParse := `'const acorn = require("acorn"); ` +
-		`const fs = require("fs"); ` +
-		`const source = fs.readFileSync("${FILENAME}", "utf8"); ` +
-		`const parse = acorn.parse(source, ${OPTIONS}); ` +
-		`console.log(JSON.stringify(parse, null, ""));'`
+	jsParse := `const acorn = require("acorn"); 
+		const fs = require("fs"); 
+		const source = fs.readFileSync(process.argv[1], "utf8");
+		const parse = acorn.parse(source, ${OPTIONS});
+		console.log(JSON.stringify(parse, null, "  "));
+		`
 	js := types.Command{
 		Executable: "node",
 		Switches:   []string{"-e", jsParse},
-		Options:    "{sourceType: 'module', ecmaVersion: 'latest'}",
+		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
 	}
 
 	// Read the configuration file if it is present
@@ -381,16 +382,15 @@ func main() {
 			out, err = cmd.Output()
 			if err != nil {
 				utils.Fail(
-					"One or both revisions are unavailable: %s, %s",
+					"One or both branches/revisions are unavailable: %s, %s",
 					options.Source, options.Destination)
 			}
 			utils.Info(
-				"Only committed files will be included in comparison to branch")
+				"Comparison of committed files in -A and -B branches/revisions")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Source != "HEAD:" && options.Destination == "" {
 			//-- Handle case of -A branch/revision given but no -B
-			cmd := exec.Command("git", "diff", "--compact-summary",
-				options.Source, "HEAD:")
+			cmd := exec.Command("git", "diff", options.Source, "--compact-summary")
 			out, err = cmd.Output()
 			if err != nil {
 				utils.Fail(
@@ -398,7 +398,7 @@ func main() {
 					options.Source)
 			}
 			utils.Info(
-				"Only committed files will be included in comparison to branch")
+				"Comparison of -A branch/revision to on-disk files")
 			fmt.Println("XXX\n" + string(out))
 		} else if options.Destination != "" {
 			//-- Handle the case of comparing two local files

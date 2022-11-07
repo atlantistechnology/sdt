@@ -157,7 +157,7 @@ Requires the tool `sqlformat` (by default).  See:
 
 ## JavaScript
 
-TODO.  Supports both `semantic` and `parsetree` subcommands.
+Initial support created.  Supports both `semantic` and `parsetree` subcommands.
 
 Requires the `node` interpreter and the library `acorn` (by default). See:
 
