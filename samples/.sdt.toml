@@ -24,6 +24,23 @@ glob = "*"
     executable = "python"
     switches = [ "-m", "ast", "-a" ]
 
+[commands.python_old]
+    # Unfortunately, Python <= 3.8 does not support the direct command-line
+    # use of the `ast` module.  A somewhat ugly command line—and an equally
+    # unattractive parse tree—can be obtained with the following.
+    executable = "python3.8"
+    switches = [
+        "-c",
+        """\
+        'import ast; \
+         print(ast.dump( \
+                 ast.parse( \
+                 open("samples/funcs0.py").read()), \
+                 annotate_fields=False, \
+                 include_attributes=True).replace(", ", ",\n") )' \
+        """
+    ]
+
 [commands.javascript]
     # The largish JS code passed in with -e has the additional magic
     # meta-variables ${FILENAME} and ${OPTIONS} that the Golang code will 
@@ -33,15 +50,17 @@ glob = "*"
     switches = [
         "-e",
         """\
-        'const acorn = require("acorn"); \
-         const fs = require("fs"); \
-         const source = fs.readFileSync("${FILENAME}", "utf8"); \
-         const parse = acorn.parse(source, ${OPTIONS}); \
-         console.log(JSON.stringify(parse, null, ""));' \
+        const acorn = require("acorn"); \
+        const fs = require("fs"); \
+        const source = fs.readFileSync(process.argv[1], "utf8"); \
+        const parse = acorn.parse(source, ${OPTIONS}); \
+        console.log(JSON.stringify(parse, null, "  ")); \
         """
     ]
     # ecmaVersion: Must be either 3, 5, 6 (or 2015), 7 (2016), 8 (2017), 
     # 9 (2018), 10 (2019), 11 (2020), 12 (2021), 13 (2022), 14 (2023), 
-    # or "latest" (the latest the library supports). 
-    options = "{sourceType: 'module', ecmaVersion: 'latest'}"
+    # or "latest" (the latest the library supports).
+    # NOTE: For shell escaping, must use double quotes in strings;
+    # happily, TOML gives us triple quotes to accomodate this.
+    options = """{sourceType: "module", ecmaVersion: "latest"}"""
 
