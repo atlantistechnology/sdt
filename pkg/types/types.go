@@ -38,8 +38,8 @@ type (
 type LineType int8
 
 const (
-	Status LineType = iota
-	CompactDiff
+	Status      LineType = iota
+	CompactDiff          // Probably deprecated for "fake" RawNames
 	RawNames
 )
 

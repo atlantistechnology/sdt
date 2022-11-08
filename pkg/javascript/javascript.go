@@ -36,7 +36,6 @@ func Diff(filename string, options types.Options, config types.Config) string {
 		//-- Comparison of two local files
 		filename, headTree, currentTree = utils.LocalFileTrees(
 			jsCmd, switches, options, "JavaScript", canonical)
-		utils.Info("Comparing local files: %s", filename)
 	} else {
 		//-- Comparison of a branch/revision to a current file
 		headTree, currentTree = utils.RevisionToCurrentTree(
