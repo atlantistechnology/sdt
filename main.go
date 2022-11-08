@@ -49,6 +49,7 @@ const usage = `Usage of Semantic Diff Tool (sdt):
     sdt semantic -src my-file.go -dst /path/to/other.go  # Files not in git
 
 `
+
 func consistentOptions(options types.Options) string {
 	// For now we will only allow the following combinations
 	//
@@ -168,26 +169,27 @@ func getOptions() types.Options {
 	}
 }
 
-func main() {
-	// Process all flags and subcommands provided
-	options := getOptions()
-	checkOpts := consistentOptions(options)
-	if checkOpts != "HAPPY" {
-		utils.Fail(checkOpts)
-	}
+var JsSwitches string = `
+	const acorn = require("acorn"); 
+	const fs = require("fs"); 
+	const source = fs.readFileSync(process.argv[1], "utf8");
+	const parse = acorn.parse(source, ${OPTIONS});
+	console.log(JSON.stringify(parse, null, "  "));
+`
 
+var commands = map[string]types.Command{
 	// Configure default tools that might be overrridden by the TOML config
-	python := types.Command{
+	"python": {
 		Executable: "python",
 		Switches:   []string{"-m", "ast", "-a"},
 		Options:    "",
-	}
-	ruby := types.Command{
+	},
+	"ruby": {
 		Executable: "ruby",
 		Switches:   []string{"--dump=parsetree"},
 		Options:    "",
-	}
-	sql := types.Command{
+	},
+	"sql": {
 		Executable: "sqlformat",
 		Switches: []string{
 			"--reindent_aligned",
@@ -196,30 +198,27 @@ func main() {
 			"--keywords=upper",
 		},
 		Options: "",
-	}
-	jsParse := `const acorn = require("acorn"); 
-		const fs = require("fs"); 
-		const source = fs.readFileSync(process.argv[1], "utf8");
-		const parse = acorn.parse(source, ${OPTIONS});
-		console.log(JSON.stringify(parse, null, "  "));
-		`
-	js := types.Command{
+	},
+	"js": {
 		Executable: "node",
-		Switches:   []string{"-e", jsParse},
+		Switches:   []string{"-e", JsSwitches},
 		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
-	}
+	},
+}
 
-	// Read the configuration file if it is present
-	var out []byte
+func main() {
+	// Process all flags and subcommands provided
+	options := getOptions()
+	if checkOpts := consistentOptions(options); checkOpts != "HAPPY" {
+		utils.Fail(checkOpts)
+	}
 
 	cfgMessage := "Read $HOME/.sdt.toml for configuration overrides"
 	description := "Default commands for each language type"
 	configFile := fmt.Sprintf("%s/.sdt.toml", os.Getenv("HOME"))
 
 	var config types.Config
-	_, err := toml.DecodeFile(configFile, &config)
-
-	if err != nil {
+	if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		cfgMessage = "No $HOME/.sdt.toml file, using built-in defaults"
 	} else {
 		// Glob can be defined twice, but command-line rules when different
@@ -232,28 +231,23 @@ func main() {
 		}
 		// We might override default programming language commands
 		if userpython, found := config.Commands["python"]; found {
-			python = userpython
+			commands["python"] = userpython
 		}
 		if userruby, found := config.Commands["ruby"]; found {
-			ruby = userruby
+			commands["ruby"] = userruby
 		}
 		if usersql, found := config.Commands["sql"]; found {
-			sql = usersql
+			commands["sql"] = usersql
 		}
 		if userjs, found := config.Commands["javascript"]; found {
-			js = userjs
+			commands["js"] = userjs
 		}
 	}
 	// Create userCfg with possibly changed values for Commands
 	userCfg := types.Config{
 		Description: description,
 		Glob:        config.Glob,
-		Commands: map[string]types.Command{
-			"python":     python,
-			"ruby":       ruby,
-			"sql":        sql,
-			"javascript": js,
-		},
+		Commands:    commands,
 	}
 
 	// The call to consistentOptions() has already ruled out cases that are
@@ -263,10 +257,11 @@ func main() {
 			//-- Handle default case of comparing HEAD to current files
 			utils.Info("Comparing HEAD to current changes on-disk")
 			cmd := exec.Command("git", "status")
-			if out, err = cmd.Output(); err != nil {
+			out, err := cmd.Output()
+			if err != nil {
 				utils.Fail("%s %s", err, "(you are probably not in a git directory)")
 			}
-			git.parseGitStatus(out, options, userCfg)
+			git.ParseGitStatus(out, options, userCfg)
 		} else if strings.HasSuffix(options.Source, ":") {
 			//-- Handle case of two branches/revisions given for -A/-B
 			//-- Handle case of -A branch/revision given but no -B
@@ -283,7 +278,7 @@ func main() {
 				args = append(args, options.Destination)
 			}
 			cmd := exec.Command("git", args...)
-			out, err = cmd.Output()
+			out, err := cmd.Output()
 			if err != nil {
 				var msg string
 				if options.Destination == "" {
@@ -293,13 +288,13 @@ func main() {
 				}
 				utils.Fail(msg, options.Source, options.Destination)
 			}
-			git.parseGitDiffCompact(string(out), options, userCfg)
+			git.ParseGitDiffCompact(string(out), options, userCfg)
 		} else if options.Destination != "" {
 			//-- Handle the case of comparing two local files
 			// ...which were verified as existing in an earlier check
 			utils.Info("Comparing local files: %s -> %s",
 				options.Source, options.Destination)
-			git.compare("", options, userCfg, types.RawNames)
+			git.Compare("", options, userCfg, types.RawNames)
 		} else {
 			//-- This should never happen!
 			utils.Fail("Unable to process flags: %v", options)
@@ -317,10 +312,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "destination: %s\n", options.Destination)
 		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", options.Dumbterm)
 		fmt.Fprintf(os.Stderr, "---\n")
-		fmt.Fprintf(os.Stderr, "python: %s %s\n", python.Executable, python.Switches)
-		fmt.Fprintf(os.Stderr, "ruby: %s %s\n", ruby.Executable, ruby.Switches)
-		fmt.Fprintf(os.Stderr, "sql: %s\n  %s\n", sql.Executable, sql.Switches)
+		fmt.Fprintf(os.Stderr, "python: %s %s\n",
+			commands["python"].Executable, commands["python"].Switches)
+		fmt.Fprintf(os.Stderr, "ruby: %s %s\n",
+			commands["ruby"].Executable, commands["ruby"].Switches)
+		fmt.Fprintf(os.Stderr, "sql: %s\n  %s\n",
+			commands["sql"].Executable, commands["sql"].Switches)
 		fmt.Fprintf(os.Stderr, "javascript: %s\n  %s\n  %s\n",
-			js.Executable, js.Switches, js.Options)
+			commands["js"].Executable, commands["js"].Switches,
+			commands["js"].Options)
 	}
 }

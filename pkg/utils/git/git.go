@@ -28,7 +28,7 @@ const (
 	Untracked
 )
 
-func compareFileType(
+func CompareFileType(
 	ext string,
 	filename string,
 	options types.Options,
@@ -52,7 +52,7 @@ func compareFileType(
 	}
 }
 
-func compare(
+func Compare(
 	line string,
 	options types.Options,
 	config types.Config,
@@ -67,7 +67,7 @@ func compare(
 		ext := filepath.Ext(line)
 
 		if status == "modified" {
-			compareFileType(ext, filename, options, config)
+			CompareFileType(ext, filename, options, config)
 		}
 	case types.RawNames:
 		ext := filepath.Ext(options.Source)
@@ -80,11 +80,11 @@ func compare(
 		// We allow a slight cleverness of an empty filename meaning that
 		// the comparison is between options.Source and options.Destination
 		// which will by filepaths not branches/revisions
-		compareFileType(ext, "", options, config)
+		CompareFileType(ext, "", options, config)
 	}
 }
 
-func parseGitDiffCompact(diff string, options types.Options, config types.Config) {
+func ParseGitDiffCompact(diff string, options types.Options, config types.Config) {
 	// We wish to sort the changes by their type. The display is a hybrid
 	// between `git diff` and `git status`.  Untracked files won't be shown.
 	// But for empty destination, the on-disk files will be used as target
@@ -167,12 +167,14 @@ func parseGitDiffCompact(diff string, options types.Options, config types.Config
 
 		if options.Destination != "" {
 			tmpName := "*-" + strings.ReplaceAll(filename, "/", ":")
-			if tmpfile, err = os.CreateTemp("", tmpName); err != nil {
+			tmpfile, err = os.CreateTemp("", tmpName)
+			if err != nil {
 				utils.Fail("Could not create temporary destination for %s", filename)
 			}
 			// Retrieve the HEAD version of the file to a temporary filename
 			cmdHead := exec.Command("git", "show", options.Destination+filename)
-			if body, err = cmdHead.Output(); err != nil {
+			body, err = cmdHead.Output()
+			if err != nil {
 				utils.Fail("Unable to retrieve file %s from branch/revision %s",
 					filename, options.Destination)
 			}
@@ -183,12 +185,14 @@ func parseGitDiffCompact(diff string, options types.Options, config types.Config
 
 		if options.Source != "HEAD:" {
 			tmpName := "*-" + strings.ReplaceAll(filename, "/", ":")
-			if tmpfile, err = os.CreateTemp("", tmpName); err != nil {
+			tmpfile, err = os.CreateTemp("", tmpName)
+			if err != nil {
 				utils.Fail("Could not create temporary source for %s", filename)
 			}
 			// Retrieve the HEAD version of the file to a temporary filename
 			cmdHead := exec.Command("git", "show", options.Source+filename)
-			if body, err = cmdHead.Output(); err != nil {
+			body, err = cmdHead.Output()
+			if err != nil {
 				utils.Fail("Unable to retrieve file %s from branch/revision %s",
 					filename, options.Source)
 			}
@@ -208,11 +212,11 @@ func parseGitDiffCompact(diff string, options types.Options, config types.Config
 			Destination: dst,
 		}
 		changeFile.Println("    " + filename)
-		compare("", perFileOpts, config, types.RawNames)
+		Compare("", perFileOpts, config, types.RawNames)
 	}
 }
 
-func parseGitStatus(status []byte, options types.Options, config types.Config) {
+func ParseGitStatus(status []byte, options types.Options, config types.Config) {
 	var section gitStatus = Preamble
 	lines := bytes.Split(status, []byte("\n"))
 
@@ -240,12 +244,12 @@ func parseGitStatus(status []byte, options types.Options, config types.Config) {
 			case Staged:
 				staged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					compare(line, options, config, types.Status)
+					Compare(line, options, config, types.Status)
 				}
 			case Unstaged:
 				unstaged.Println(fstatus)
 				if options.Semantic || options.Parsetree {
-					compare(line, options, config, types.Status)
+					Compare(line, options, config, types.Status)
 				}
 			case Untracked:
 				untracked.Println(fstatus)
@@ -253,4 +257,3 @@ func parseGitStatus(status []byte, options types.Options, config types.Config) {
 		}
 	}
 }
-
