@@ -1,4 +1,10 @@
 - [ ] MORE tests
+  - [ ] Python package
+  - [ ] Ruby package
+  - [ ] JavaScript package
+  - [ ] SQL package
+  - [ ] More coverage in `utils` package (which has grown greatly)
+  - [ ] `git` package (how to test?)
 - [ ] Implement the --glob switch
 - [x] Look for `.sdt.toml` in local repo first
 - [ ] Editor Integration:
