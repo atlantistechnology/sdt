@@ -12,7 +12,7 @@ import (
 
 func simplifyParseTree(parseTree string) string {
 	reStart := regexp.MustCompile(`(?m)"start": \d+`)
-	mod1 := reStart.ReplaceAllString(parseTree, `"start: ?`)
+	mod1 := reStart.ReplaceAllString(parseTree, `"start": ?`)
 	reEnd := regexp.MustCompile(`(?m)"end": \d+`)
 	mod2 := reEnd.ReplaceAllString(mod1, `"end": ?`)
 	return mod2
@@ -22,9 +22,9 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var currentTree []byte
 	var headTree []byte
 
-	jsCmd := config.Commands["js"].Executable
-	switches := config.Commands["js"].Switches
-	toolOpts := config.Commands["js"].Options
+	jsCmd := config.Commands["ecmaScript"].Executable
+	switches := config.Commands["ecmaScript"].Switches
+	toolOpts := config.Commands["ecmaScript"].Options
 	canonical := false // Generate AST, don't canonicalize
 
 	// JavaScript processing is templatized with tool options

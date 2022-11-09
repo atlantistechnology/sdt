@@ -44,6 +44,15 @@ func CompareFileType(
 		diffColor.Println(sql.Diff(filename, options, config))
 	case ".js":
 		diffColor.Println(javascript.Diff(filename, options, config))
+	// Several other extensions are -sometimes- used for JavaScript
+	case ".cjs":
+		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".mjs":
+		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".es":
+		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".es6":
+		diffColor.Println(javascript.Diff(filename, options, config))
 	case ".go":
 		// TODO: Need to investigate AST tools
 		diffColor.Println("| Comparison with Golang syntax tree or canonicalization")

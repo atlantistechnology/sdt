@@ -84,3 +84,12 @@ incompatible with the one created by a different tool.
 * I feel like this basically eliminates any sort of authoritative "semantic
 hash" of a file or project, but it doesn't eliminate the utility of a richer
 diff tool.
+
+* **ABANDONED**: After closer examination, the parsers used by `astexplorer`
+are not generally of sufficient quality, and this is not a usable approach.
+
+## Early thoughts, part 3
+
+The adopted approach is to write the tool in Golang, but utilize various
+external tools to create parse trees or canonicalized representations.  See
+other documentation for discussion of this successful approach.

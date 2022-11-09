@@ -82,3 +82,40 @@ const (
 	Golang
 	SomeOtherLanguage
 )
+
+var JsSwitches string = `
+	const acorn = require("acorn"); 
+	const fs = require("fs"); 
+	const source = fs.readFileSync(process.argv[1], "utf8");
+	const parse = acorn.parse(source, ${OPTIONS});
+	console.log(JSON.stringify(parse, null, "  "));
+`
+
+var Commands = map[string]Command{
+	// Configure default tools that might be overrridden by the TOML config
+	"python": {
+		Executable: "python",
+		Switches:   []string{"-m", "ast", "-a"},
+		Options:    "",
+	},
+	"ruby": {
+		Executable: "ruby",
+		Switches:   []string{"--dump=parsetree"},
+		Options:    "",
+	},
+	"sql": {
+		Executable: "sqlformat",
+		Switches: []string{
+			"--reindent_aligned",
+			"--identifiers=lower",
+			"--strip-comments",
+			"--keywords=upper",
+		},
+		Options: "",
+	},
+	"ecmaScript": {
+		Executable: "node",
+		Switches:   []string{"-e", JsSwitches},
+		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
+	},
+}

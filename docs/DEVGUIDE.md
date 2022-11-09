@@ -58,8 +58,8 @@ you'd take.
 * The point of the executable/switches pattern is that the executable and
   switches may optionally be configured in `$PROJECT/.sdt.toml` or
   `$HOME/.sdt.toml` by each individual user.  However, you must also
-  configure default options in `main.go` for those users who wish to simply
-  use their system path versions of tools.
+  configure default options in `pkg/types/types.go` for those users who wish
+  to simply use their system path versions of tools.
 
   In the languages supported so far, using the language executables themselves
   (and a few switches) has worked. However, for FizzBuzz, you may need to

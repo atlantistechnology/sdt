@@ -287,7 +287,20 @@ func ColorDiff(
 		reTreeClean := regexp.MustCompile(`(?m)(\| |\+-)`)
 		transforms = append(transforms, *reComment, *reTreeClean)
 	case types.Python:
-		//transforms = append(transforms, ...)
+		reLineno := regexp.MustCompile(`(?m)^\s*lineno=\?,$[\r\n]*`)
+		reEndlineno := regexp.MustCompile(`(?m)^\s*end_lineno=\?,$[\r\n]*`)
+		reColoffset := regexp.MustCompile(`(?m)^\s*col_offset=\?,$[\r\n]*`)
+		reEndcoloffset := regexp.MustCompile(`(?m)   end_col_offset=\?`)
+		transforms = append(transforms,
+			*reLineno, *reEndlineno, *reColoffset, *reEndcoloffset)
+	case types.JavaScript:
+		reStart := regexp.MustCompile(`(?m)^\s*"start": \?,$[\r\n]*`)
+		reEnd := regexp.MustCompile(`(?m)^\s*"end": \?,$[\r\n]*`)
+		reBraceOnly := regexp.MustCompile(`(?m)^\s*[\]}],?$[\r\n]*`)
+		rePunct := regexp.MustCompile(`[\[{,"]`)
+		reBlankln := regexp.MustCompile(`(?m)^\s*$[\r\n]*`)
+		transforms = append(transforms, 
+			*reStart, *reEnd, *reBraceOnly, *rePunct, *reBlankln)
 	}
 
 	buff.WriteString("Comparison of parse trees (HEAD -> Current)\n")
@@ -317,7 +330,7 @@ func ColorDiff(
 	report := BufferToDiff(buff, false, dumbterm)
 	if dumbterm {
 		// For dumb terminal/CI=true, do some cleanup
-		reCleanupDumbterm := regexp.MustCompile(`(?m){{_}}`)
+		reCleanupDumbterm := regexp.MustCompile(`{{[+_-]}}`)
 		report = reCleanupDumbterm.ReplaceAllString(report, "")
 	}
 	return report
@@ -344,7 +357,7 @@ func changedGitSegments(
 	var newCount uint32
 
 	buff.WriteString(highlights.Header)
-	buff.WriteString("Segments with likely semantic changes (HEAD -> Current)\n")
+	buff.WriteString("Segments with likely semantic changes\n")
 
 	for _, line := range lines {
 		n, _ := fmt.Sscanf(
