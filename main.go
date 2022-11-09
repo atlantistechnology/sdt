@@ -118,8 +118,8 @@ func getOptions() types.Options {
 	flag.BoolVar(&semantic, "l", false, "Semantically meaningful changes")
 
 	var glob string
-	flag.StringVar(&glob, "glob", "*", "Limit compared files by a glob pattern")
-	flag.StringVar(&glob, "g", "*", "Limit compared files by glob (short flag)")
+	flag.StringVar(&glob, "glob", "", "Limit compared files by a glob pattern")
+	flag.StringVar(&glob, "g", "", "Limit compared files by glob (short flag)")
 
 	var parsetree bool
 	flag.BoolVar(&parsetree, "p", false, "Full syntax tree differences")
@@ -206,26 +206,32 @@ var commands = map[string]types.Command{
 	},
 }
 
-func main() {
-	// Process all flags and subcommands provided
-	options := getOptions()
-	if checkOpts := consistentOptions(options); checkOpts != "HAPPY" {
-		utils.Fail(checkOpts)
+func getConfig(options types.Options) (types.Config, string) {
+	description := "Default commands for each language type"
+	cfgMessage := "No .sdt.toml file, using built-in defaults"
+	configFile := "" // Empty string for no external config
+	projectConfig := "./.sdt.toml"
+	homeConfig := os.Getenv("HOME") + "/.sdt.toml"
+
+	if _, err := os.Stat(projectConfig); err == nil {
+		cfgMessage = "Read project-local .sdt.toml for configuration overrides"
+		configFile = projectConfig
+	} else if _, err := os.Stat(homeConfig); err == nil {
+		cfgMessage = "Read $HOME/.sdt.toml for configuration overrides"
+		configFile = homeConfig
 	}
 
-	cfgMessage := "Read $HOME/.sdt.toml for configuration overrides"
-	description := "Default commands for each language type"
-	configFile := fmt.Sprintf("%s/.sdt.toml", os.Getenv("HOME"))
-
 	var config types.Config
-	if _, err := toml.DecodeFile(configFile, &config); err != nil {
-		cfgMessage = "No $HOME/.sdt.toml file, using built-in defaults"
+	if configFile == "" {
+		// Nothing to do here, just use defaults
+	} else if _, err := toml.DecodeFile(configFile, &config); err != nil {
+		utils.Fail("Unable to read configuration in %s", configFile)
 	} else {
 		// Glob can be defined twice, but command-line rules when different
-		if config.Glob != "" && options.Glob == "*" {
+		if config.Glob != "" && options.Glob == "" {
 			options.Glob = config.Glob
 		}
-		// $HOME/.sdt.toml may override default description if present
+		// .sdt.toml may override default description if present
 		if config.Description != "" {
 			description = config.Description
 		}
@@ -243,12 +249,26 @@ func main() {
 			commands["js"] = userjs
 		}
 	}
-	// Create userCfg with possibly changed values for Commands
-	userCfg := types.Config{
+
+	// If no glob in either switches or config file, set pattern
+	if options.Glob == "" {
+		options.Glob = "*"
+	}
+
+	return types.Config{
 		Description: description,
 		Glob:        config.Glob,
 		Commands:    commands,
+	}, cfgMessage
+}
+
+func main() {
+	// Process all flags and subcommands provided
+	options := getOptions()
+	if checkOpts := consistentOptions(options); checkOpts != "HAPPY" {
+		utils.Fail(checkOpts)
 	}
+	config, cfgMessage := getConfig(options)
 
 	// The call to consistentOptions() has already ruled out cases that are
 	// generally impermissible. This limits the if predicates needed here.
@@ -261,7 +281,7 @@ func main() {
 			if err != nil {
 				utils.Fail("%s %s", err, "(you are probably not in a git directory)")
 			}
-			git.ParseGitStatus(out, options, userCfg)
+			git.ParseGitStatus(out, options, config)
 		} else if strings.HasSuffix(options.Source, ":") {
 			//-- Handle case of two branches/revisions given for -A/-B
 			//-- Handle case of -A branch/revision given but no -B
@@ -288,13 +308,14 @@ func main() {
 				}
 				utils.Fail(msg, options.Source, options.Destination)
 			}
-			git.ParseGitDiffCompact(string(out), options, userCfg)
+			git.ParseGitDiffCompact(string(out), options, config)
 		} else if options.Destination != "" {
 			//-- Handle the case of comparing two local files
 			// ...which were verified as existing in an earlier check
 			utils.Info("Comparing local files: %s -> %s",
 				options.Source, options.Destination)
-			git.Compare("", options, userCfg, types.RawNames)
+			git.Compare("", options, config, types.RawNames)
+
 		} else {
 			//-- This should never happen!
 			utils.Fail("Unable to process flags: %v", options)
@@ -302,7 +323,7 @@ func main() {
 	}
 
 	if options.Verbose {
-		fmt.Fprintf(os.Stderr, "Description: %s\n", description)
+		fmt.Fprintf(os.Stderr, "Description: %s\n", config.Description)
 		fmt.Fprintf(os.Stderr, "Config: %s\n", cfgMessage)
 		fmt.Fprintf(os.Stderr, "status: %t\n", options.Status)
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", options.Semantic)
@@ -313,13 +334,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", options.Dumbterm)
 		fmt.Fprintf(os.Stderr, "---\n")
 		fmt.Fprintf(os.Stderr, "python: %s %s\n",
-			commands["python"].Executable, commands["python"].Switches)
+			config.Commands["python"].Executable,
+			config.Commands["python"].Switches,
+		)
 		fmt.Fprintf(os.Stderr, "ruby: %s %s\n",
-			commands["ruby"].Executable, commands["ruby"].Switches)
+			config.Commands["ruby"].Executable,
+			config.Commands["ruby"].Switches,
+		)
 		fmt.Fprintf(os.Stderr, "sql: %s\n  %s\n",
-			commands["sql"].Executable, commands["sql"].Switches)
+			config.Commands["sql"].Executable,
+			config.Commands["sql"].Switches,
+		)
 		fmt.Fprintf(os.Stderr, "javascript: %s\n  %s\n  %s\n",
-			commands["js"].Executable, commands["js"].Switches,
-			commands["js"].Options)
+			config.Commands["js"].Executable,
+			config.Commands["js"].Switches,
+			config.Commands["js"].Options,
+		)
 	}
 }
