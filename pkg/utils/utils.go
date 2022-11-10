@@ -27,22 +27,22 @@ func Info(msg string, params ...interface{}) {
 	fmt.Fprintf(os.Stderr, msg, params...)
 }
 
-type lineOffset struct {
-	start uint32
-	end   uint32
-	line  string
+type LineOffset struct {
+	Start uint32
+	End   uint32
+	Line  string
 }
 
 // We assume that lines are sensibly split on LF, not CR or CRLF
-func MakeOffsetsFromString(text string) []lineOffset {
+func MakeOffsetsFromString(text string) []LineOffset {
 	lines := strings.Split(text, "\n")
-	var records []lineOffset
+	var records []LineOffset
 	var start uint32 = 0
 	var length uint32
 
 	for i := 0; i < len(lines); i++ {
 		length = uint32(len(lines[i]) + 1) // Add back striped LF
-		record := lineOffset{start: start, end: start + length, line: lines[i]}
+		record := LineOffset{Start: start, End: start + length, Line: lines[i]}
 		records = append(records, record)
 		start += length
 	}
@@ -51,15 +51,15 @@ func MakeOffsetsFromString(text string) []lineOffset {
 
 // We assume that lines are sensibly split on LF, not CR or CRLF
 // Also assume that bytes encode text as UTF-8 not any odd encoding
-func MakeOffsetsFromByteArray(text []byte) []lineOffset {
+func MakeOffsetsFromByteArray(text []byte) []LineOffset {
 	lines := bytes.Split(text, []byte("\n"))
-	var records []lineOffset
+	var records []LineOffset
 	var start uint32 = 0
 	var length uint32
 
 	for i := 0; i < len(lines); i++ {
 		length = uint32(len(lines[i]) + 1) // Add back stripped LF
-		record := lineOffset{start: start, end: start + length, line: string(lines[i])}
+		record := LineOffset{Start: start, End: start + length, Line: string(lines[i])}
 		records = append(records, record)
 		start += length
 	}
@@ -69,9 +69,9 @@ func MakeOffsetsFromByteArray(text []byte) []lineOffset {
 // Return the line number identified.  Use -1 as sentinel for "not found"
 // TODO: if we care about speed, we can do a bisection search of the
 // well-ordered {start, end, line} structures
-func LineAtPosition(records []lineOffset, pos uint32) int {
+func LineAtPosition(records []LineOffset, pos uint32) int {
 	for lineNo, record := range records {
-		if pos >= record.start && pos < record.end {
+		if pos >= record.Start && pos < record.End {
 			return lineNo
 		}
 	}

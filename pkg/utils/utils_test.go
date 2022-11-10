@@ -1,8 +1,10 @@
-package utils
+package utils_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/atlantistechnology/sdt/pkg/utils"
 )
 
 var sampleString = `Mary had a little lamb
@@ -17,19 +19,19 @@ var startsWant = []uint32{0, 23, 51, 81}
 var endsWant = []uint32{23, 51, 81, 105}
 
 func TestOffsetsFromString(t *testing.T) {
-	lineOffsets := MakeOffsetsFromString(sampleString)
+	lineOffsets := utils.MakeOffsetsFromString(sampleString)
 	if len(lineOffsets) != nRecords {
 		t.Fatalf(`MakeOffsetsFromString() does not produce %d records`, nRecords)
 	}
 }
 
 func TestOffsetsFromStringStartsEnds(t *testing.T) {
-	lineOffsets := MakeOffsetsFromString(sampleString)
+	lineOffsets := utils.MakeOffsetsFromString(sampleString)
 	var starts []uint32
 	var ends []uint32
 	for _, record := range lineOffsets {
-		starts = append(starts, record.start)
-		ends = append(ends, record.end)
+		starts = append(starts, record.Start)
+		ends = append(ends, record.End)
 	}
 	if !reflect.DeepEqual(starts, startsWant) {
 		t.Fatalf(
@@ -44,19 +46,19 @@ func TestOffsetsFromStringStartsEnds(t *testing.T) {
 }
 
 func TestOffsetsFromByteArray(t *testing.T) {
-	lineOffsets := MakeOffsetsFromByteArray(sampleByteArray)
+	lineOffsets := utils.MakeOffsetsFromByteArray(sampleByteArray)
 	if len(lineOffsets) != nRecords {
 		t.Fatalf(`MakeOffsetsFromString() does not produce %d records`, nRecords)
 	}
 }
 
 func TestOffsetsFromByteArrayStartsEnds(t *testing.T) {
-	lineOffsets := MakeOffsetsFromByteArray(sampleByteArray)
+	lineOffsets := utils.MakeOffsetsFromByteArray(sampleByteArray)
 	var starts []uint32
 	var ends []uint32
 	for _, record := range lineOffsets {
-		starts = append(starts, record.start)
-		ends = append(ends, record.end)
+		starts = append(starts, record.Start)
+		ends = append(ends, record.End)
 	}
 	if !reflect.DeepEqual(starts, startsWant) {
 		t.Fatalf(
@@ -73,9 +75,9 @@ func TestOffsetsFromByteArrayStartsEnds(t *testing.T) {
 func TestLineAtPosition(t *testing.T) {
 	offsetsTry := []uint32{3, 25, 26, 70, 90, 999}
 	linesWant := []int{0, 1, 1, 2, 3, -1}
-	lineOffsets := MakeOffsetsFromString(sampleString)
+	lineOffsets := utils.MakeOffsetsFromString(sampleString)
 	for i, offset := range offsetsTry {
-		lineNo := LineAtPosition(lineOffsets, offset)
+		lineNo := utils.LineAtPosition(lineOffsets, offset)
 		if lineNo != linesWant[i] {
 			t.Fatalf(
 				`LineAtPosition(lineOffsets, %v) produces %d rather than %d`,
