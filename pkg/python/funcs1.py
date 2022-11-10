@@ -1,0 +1,1 @@
+../../samples/funcs1.py

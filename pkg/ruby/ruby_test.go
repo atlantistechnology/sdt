@@ -1,4 +1,4 @@
-package python_test
+package ruby_test
 
 import (
 	"crypto/md5"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/atlantistechnology/sdt/pkg/python"
+	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
@@ -45,19 +45,19 @@ var options = types.Options{
 }
 
 var config = types.Config{
-	Description: "Configuration for Python tests",
+	Description: "Configuration for Ruby tests",
 	Glob:        "*",
 	Commands:    types.Commands,
 }
 
-var file0 = File{name: "funcs0.py", digest: "446cbb90a9860939d6a200febb87f5cf"}
-var file1 = File{name: "funcs1.py", digest: "c399625d1eda2c2ecff2747fe7258fea"}
-var file2 = File{name: "funcs2.py", digest: "009d30bfa5f9069e4922dc82601321c9"}
+var file0 = File{name: "filter0.rb", digest: "64cd23c5e93917136f20b607ea26d987"}
+var file3 = File{name: "filter3.rb", digest: "8107e1e067fb3d925fbbe52aec829f00"}
+var file4 = File{name: "filter4.rb", digest: "ab97735dfa5b67bb4b8d0834e9ef0872"}
 
 func TestCorrectFiles(t *testing.T) {
 	// First make sure that two sample files indeed contain an expected bodies,
 	// then make sure that these differences are judged semantically unimportant
-	files := []File{file0, file1, file2}
+	files := []File{file0, file3, file4}
 	for _, file := range files {
 		if !testHash(file.name, file.digest) {
 			t.Fatalf("Test file %s has been changed from expected body", file.name)
@@ -69,9 +69,9 @@ func TestNoSemanticDiff(t *testing.T) {
 	// Narrow the options to these test files
 	opts := options
 	opts.Source = file0.name
-	opts.Destination = file1.name
+	opts.Destination = file3.name
 
-	report := python.Diff("", opts, config)
+	report := ruby.Diff("", opts, config)
 
 	if !strings.Contains(report, "| No semantic differences detected") {
 		t.Fatalf("Failed to recognize semantic equivalence of %s and %s",
@@ -83,11 +83,11 @@ func TestNoParseTreeDiff(t *testing.T) {
 	// Narrow the options to these test files
 	opts := options
 	opts.Source = file0.name
-	opts.Destination = file1.name
+	opts.Destination = file3.name
 	opts.Semantic = false
 	opts.Parsetree = true
 
-	report := python.Diff("", opts, config)
+	report := ruby.Diff("", opts, config)
 
 	// Since we are using the opts.Dumbterm, changes would contain
 	// at least one of addition `{{+` or removal `{{-`
@@ -105,24 +105,16 @@ func TestSemanticDiff(t *testing.T) {
 	// Narrow the options to these test files
 	opts := options
 	opts.Source = file0.name
-	opts.Destination = file2.name
+	opts.Destination = file4.name
 
-	report := python.Diff("", opts, config)
+	report := ruby.Diff("", opts, config)
 
-	if !strings.Contains(report, "-    total = a + b") {
+	if !strings.Contains(report, "-puts mod5? 1..100") {
+		t.Fatalf("Failed to recognize semantic difference between %s and %s",
+			opts.Source, opts.Destination)
+	}
+	if !strings.Contains(report, "+puts mod5? 1..50") {
 		t.Fatalf("Failed to recognize semantic difference in `add()` of %s and %s",
-			opts.Source, opts.Destination)
-	}
-	if !strings.Contains(report, "+    total = b + a") {
-		t.Fatalf("Failed to recognize semantic difference in `add()` of %s and %s",
-			opts.Source, opts.Destination)
-	}
-	if !strings.Contains(report, "-    ratio = a / b") {
-		t.Fatalf("Failed to recognize semantic difference in `div()` of %s and %s",
-			opts.Source, opts.Destination)
-	}
-	if !strings.Contains(report, "+    ratio = a // b") {
-		t.Fatalf("Failed to recognize semantic difference in `div()` of %s and %s",
 			opts.Source, opts.Destination)
 	}
 }
@@ -131,19 +123,25 @@ func TestParseTreeDiff(t *testing.T) {
 	// Narrow the options to these test files
 	opts := options
 	opts.Source = file0.name
-	opts.Destination = file2.name
+	opts.Destination = file4.name
 	opts.Semantic = false
 	opts.Parsetree = true
 
-	report := python.Diff("", opts, config)
+	report := ruby.Diff("", opts, config)
 
 	// Since we are using the opts.Dumbterm, changes have ASCII markers
-	if !strings.Contains(report, "{{+Floor}}") {
-		t.Fatalf("Failed to parse tree difference in `div()` of %s and %s",
+	if !strings.Contains(report, "{{-10}}{{+5}}") {
+		t.Fatalf("Failed to parse tree difference between %s and %s",
 			opts.Source, opts.Destination)
 	}
-	if !strings.Contains(report, "{{-a}}{{+b}}") {
-		t.Fatalf("Failed to parse tree difference in `add()` of %s and %s",
+	// Other than the one change, should have no change markers
+	minusOneChange := strings.ReplaceAll(report, "{{-10}}{{+5}}", "")
+	if strings.Contains(minusOneChange, "{{-") {
+		t.Fatalf("Found spurious parse tree difference between %s and %s",
+			opts.Source, opts.Destination)
+	}
+	if strings.Contains(minusOneChange, "{{+") {
+		t.Fatalf("Found spurious parse tree difference between %s and %s",
 			opts.Source, opts.Destination)
 	}
 }
@@ -152,16 +150,16 @@ func TestNoSpuriousSemantic(t *testing.T) {
 	// Narrow the options to these test files
 	opts := options
 	opts.Source = file0.name
-	opts.Destination = file2.name
+	opts.Destination = file3.name
 
-	report := python.Diff("", opts, config)
+	report := ruby.Diff("", opts, config)
 
-	if strings.Contains(report, "a - b") {
-		t.Fatalf("Misrecognized semantic difference in `sub()` of %s and %s",
+	if strings.Contains(report, "puts mod5? 1..100") {
+		t.Fatalf("Misrecognized semantic difference between %s and %s",
 			opts.Source, opts.Destination)
 	}
-	if strings.Contains(report, "a-b") {
-		t.Fatalf("Misrecognized semantic difference in `sub()` of %s and %s",
+	if strings.Contains(report, "puts(mod5?(1..100))") {
+		t.Fatalf("Misrecognized semantic difference between %s and %s",
 			opts.Source, opts.Destination)
 	}
 }
