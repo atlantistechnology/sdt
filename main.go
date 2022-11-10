@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	//"github.com/mitchellh/copystructure"
 
 	"github.com/atlantistechnology/sdt/pkg/types"
 	"github.com/atlantistechnology/sdt/pkg/utils"
@@ -169,49 +170,13 @@ func getOptions() types.Options {
 	}
 }
 
-var JsSwitches string = `
-	const acorn = require("acorn"); 
-	const fs = require("fs"); 
-	const source = fs.readFileSync(process.argv[1], "utf8");
-	const parse = acorn.parse(source, ${OPTIONS});
-	console.log(JSON.stringify(parse, null, "  "));
-`
-
-var commands = map[string]types.Command{
-	// Configure default tools that might be overrridden by the TOML config
-	"python": {
-		Executable: "python",
-		Switches:   []string{"-m", "ast", "-a"},
-		Options:    "",
-	},
-	"ruby": {
-		Executable: "ruby",
-		Switches:   []string{"--dump=parsetree"},
-		Options:    "",
-	},
-	"sql": {
-		Executable: "sqlformat",
-		Switches: []string{
-			"--reindent_aligned",
-			"--identifiers=lower",
-			"--strip-comments",
-			"--keywords=upper",
-		},
-		Options: "",
-	},
-	"js": {
-		Executable: "node",
-		Switches:   []string{"-e", JsSwitches},
-		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
-	},
-}
-
 func getConfig(options types.Options) (types.Config, string) {
 	description := "Default commands for each language type"
 	cfgMessage := "No .sdt.toml file, using built-in defaults"
 	configFile := "" // Empty string for no external config
 	projectConfig := "./.sdt.toml"
 	homeConfig := os.Getenv("HOME") + "/.sdt.toml"
+	commands := types.Commands
 
 	if _, err := os.Stat(projectConfig); err == nil {
 		cfgMessage = "Read project-local .sdt.toml for configuration overrides"
@@ -246,7 +211,7 @@ func getConfig(options types.Options) (types.Config, string) {
 			commands["sql"] = usersql
 		}
 		if userjs, found := config.Commands["javascript"]; found {
-			commands["js"] = userjs
+			commands["ecmaScript"] = userjs
 		}
 	}
 
@@ -345,10 +310,10 @@ func main() {
 			config.Commands["sql"].Executable,
 			config.Commands["sql"].Switches,
 		)
-		fmt.Fprintf(os.Stderr, "javascript: %s\n  %s\n  %s\n",
-			config.Commands["js"].Executable,
-			config.Commands["js"].Switches,
-			config.Commands["js"].Options,
+		fmt.Fprintf(os.Stderr, "ecmaScript: %s\n  %s\n  %s\n",
+			config.Commands["ecmaScript"].Executable,
+			config.Commands["ecmaScript"].Switches,
+			config.Commands["ecmaScript"].Options,
 		)
 	}
 }
