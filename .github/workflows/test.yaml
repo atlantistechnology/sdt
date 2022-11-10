@@ -32,7 +32,7 @@ jobs:
         run: npm install acorn
 
       - name: Python version
-        run: python --versioa
+        run: python --version
       
       - name: Ruby version
         run: ruby --version
