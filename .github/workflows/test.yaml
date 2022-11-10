@@ -17,19 +17,14 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Python version
         run: python --version
 
-      - name: Set up Ruby
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
+      - name: Ruby version
         run: ruby --version
 
       - name: Node version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-        run: npm install acorn
         run: node --version
 
       - name: Test
