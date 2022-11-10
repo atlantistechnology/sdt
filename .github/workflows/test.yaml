@@ -1,17 +1,14 @@
 name: Go package
 
-on: [pull_request]
+on: 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        ruby: [ '2.6', '2.7', '3.0' ]
-        python: [ '3.9', '3.10', '3.11' ]
-        node: [ '14', '16', '18' ]
-
     steps:
       - uses: actions/checkout@v3
 
@@ -23,21 +20,21 @@ jobs:
       - name: Test Ruby
       - uses: actions/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: [ '2.6', '2.7', '3.0' ]
         run: ruby --version
 		run: go test -v pkg/ruby/ruby_test.go
 
       - name: Test Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: [ '3.9', '3.10', '3.11' ]
 		run: python --version
 		run: go test -v pkg/python/python_test.go
 
       - name: Test JavaScript
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: [ '14', '16', '18' ]
         run: npm install acorn
         run: node --version
         run: go test -v pkg/javascript/javascript_test.go
