@@ -20,21 +20,21 @@ jobs:
       - name: Test Ruby
       - uses: actions/setup-ruby@v1
         with:
-          ruby-version: [ '2.6', '2.7', '3.0' ]
+          ruby-version: '3.0'
         run: ruby --version
 		run: go test -v pkg/ruby/ruby_test.go
 
       - name: Test Python
         uses: actions/setup-python@v4
         with:
-          python-version: [ '3.9', '3.10', '3.11' ]
+          python-version: '3.11'
 		run: python --version
 		run: go test -v pkg/python/python_test.go
 
       - name: Test JavaScript
         uses: actions/setup-node@v3
         with:
-          node-version: [ '14', '16', '18' ]
+          node-version: '18'
         run: npm install acorn
         run: node --version
         run: go test -v pkg/javascript/javascript_test.go
