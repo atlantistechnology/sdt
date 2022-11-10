@@ -23,10 +23,12 @@ jobs:
         with:
           ruby-version: '3.0'
 
-      - name: Set up JavaScript
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+
+      - name: Install Node packages
         run: npm install acorn
 
       - name: Suport tool versions
