@@ -1,1 +1,0 @@
-../../samples/filter1.rb
