@@ -299,7 +299,7 @@ func ColorDiff(
 		reBraceOnly := regexp.MustCompile(`(?m)^\s*[\]}],?$[\r\n]*`)
 		rePunct := regexp.MustCompile(`[\[{,"]`)
 		reBlankln := regexp.MustCompile(`(?m)^\s*$[\r\n]*`)
-		transforms = append(transforms, 
+		transforms = append(transforms,
 			*reStart, *reEnd, *reBraceOnly, *rePunct, *reBlankln)
 	}
 
