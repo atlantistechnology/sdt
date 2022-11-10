@@ -1,10 +1,6 @@
 name: Go package
 
-on: 
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [pull_request]
 
 jobs:
   test:
@@ -17,27 +13,24 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Test Ruby
-      - uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
-        run: ruby --version
-		run: go test -v pkg/ruby/ruby_test.go
-
-      - name: Test Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-		run: python --version
-		run: go test -v pkg/python/python_test.go
+        run: python --version
 
-      - name: Test JavaScript
+      - name: Set up Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+        run: ruby --version
+
+      - name: Node version
         uses: actions/setup-node@v3
         with:
           node-version: '18'
         run: npm install acorn
         run: node --version
-        run: go test -v pkg/javascript/javascript_test.go
 
-      - name: Test non-language-specific functionality
-        run: go test -v pkg/utils/utils_test.go
+      - name: Test
+        run: go test -v ./...
