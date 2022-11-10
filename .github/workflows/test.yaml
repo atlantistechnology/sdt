@@ -13,6 +13,11 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
       - name: Python-version
         run: python --version
       - name: Test
