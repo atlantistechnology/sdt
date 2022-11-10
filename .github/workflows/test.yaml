@@ -5,6 +5,13 @@ on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ruby: [ '2.6', '2.7', '3.0' ]
+        python: [ '3.9', '3.10', '3.11' ]
+        node: [ '14', '16', '18' ]
+
     steps:
       - uses: actions/checkout@v3
 
@@ -13,19 +20,27 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Set up Python
+      - name: Test Ruby
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+        run: ruby --version
+		run: go test -v pkg/ruby/ruby_test.go
+
+      - name: Test Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
+		run: python --version
+		run: go test -v pkg/python/python_test.go
 
-      - name: Python version
-        run: python --version
-
-      - name: Ruby version
-        run: ruby --version
-
-      - name: Node version
+      - name: Test JavaScript
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+        run: npm install acorn
         run: node --version
+        run: go test -v pkg/javascript/javascript_test.go
 
-      - name: Test
-        run: go test -v ./...
+      - name: Test non-language-specific functionality
+        run: go test -v pkg/utils/utils_test.go
