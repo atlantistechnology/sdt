@@ -1,0 +1,1 @@
+../../samples/jsFuncs0.js
