@@ -1,6 +1,6 @@
 - [ ] MORE tests
-  - [ ] Python package
-  - [ ] Ruby package
+  - [x ] Python package
+  - [x ] Ruby package
   - [ ] JavaScript package
   - [ ] SQL package
   - [ ] More coverage in `utils` package (which has grown greatly)
@@ -14,6 +14,7 @@
   - [ ] PyCharm/IntelliJ/Fleet/other JetBrains editions
   - [ ] Other editors (Emacs?)
 - [ ] Repo manager integration:
+  - [ ] GH tests on PR
   - [ ] GitHub
   - [ ] GitLab
   - [ ] BitBucket
