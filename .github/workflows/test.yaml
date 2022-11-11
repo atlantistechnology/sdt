@@ -9,6 +9,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
         ruby: [ '2.7', '3.0' ]
+        python: [ '3.10', '3.11' ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -21,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
