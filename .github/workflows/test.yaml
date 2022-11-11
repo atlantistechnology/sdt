@@ -8,9 +8,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest ]
-        ruby: [ '2.7', '3.0' ]
-        python: [ '3.9', '3.10', '3.11' ]
-        node: [ '14', '16', '18' ]
+        # ruby: [ '2.6', '2.7', '3.0' ]
+        # python: [ '3.9', '3.10', '3.11' ]
+        # node: [ '14', '16', '18' ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -23,12 +23,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: '3.0' 
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
