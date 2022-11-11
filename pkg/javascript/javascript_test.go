@@ -45,7 +45,7 @@ var options = types.Options{
 }
 
 var config = types.Config{
-	Description: "Configuration for Python tests",
+	Description: "Configuration for JavaScript tests",
 	Glob:        "*",
 	Commands:    types.Commands,
 }
