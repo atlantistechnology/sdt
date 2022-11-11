@@ -20,9 +20,10 @@ jobs:
       - name: Install sqlformat
         run: |
              if [ "$RUNNER_OS" == "Linux" ]; then
-                  apt install sqlformat
+                  subo apt install sqlformat
              elif [ "$RUNNER_OS" == "macOS" ]; then
-                  brew install sqlformat
+                  echo "Figure out macOS/homebrew later"
+                  # brew install sqlformat
              else
                   echo "$RUNNER_OS not supported"
                   exit 1
