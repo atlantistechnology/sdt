@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -25,6 +25,7 @@ jobs:
                   echo "Figure out macOS/homebrew later"
                   # brew install sqlformat
              else
+                  # probably actually just vendorize sqlformat
                   echo "$RUNNER_OS not supported"
                   exit 1
              fi
