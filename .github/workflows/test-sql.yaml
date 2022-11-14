@@ -1,0 +1,37 @@
+name: SDT unit tests for SQL diffs
+
+on: [pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Install sqlformat
+        run: |
+             if [ "$RUNNER_OS" == "Linux" ]; then
+                  sudo apt install sqlformat
+             elif [ "$RUNNER_OS" == "macOS" ]; then
+                  echo "Figure out macOS/homebrew later"
+                  # brew install sqlformat
+             else
+                  # probably actually just vendorize sqlformat
+                  echo "$RUNNER_OS not supported"
+                  exit 1
+             fi
+
+      - name: Sqlformat version
+        run: sqlformat --version
+
+      - name: Test
+        run: go test -v pkg/sql/sql_test.go
