@@ -113,9 +113,16 @@ var Commands = map[string]Command{
 		},
 		Options: "",
 	},
-	"ecmaScript": {
+	"javascript": {
 		Executable: "node",
 		Switches:   []string{"-e", JsSwitches},
 		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
+	},
+	// The Go standard package `json` is used by default. For an example of
+	// using external tool `jq`, see the example in `samples/.sdt.toml`
+	"json": {
+		Executable: "BUILT-IN",
+		Switches:   []string{},
+		Options: "",
 	},
 }

@@ -22,9 +22,9 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	var currentTree []byte
 	var headTree []byte
 
-	jsCmd := config.Commands["ecmaScript"].Executable
-	switches := config.Commands["ecmaScript"].Switches
-	toolOpts := config.Commands["ecmaScript"].Options
+	jsCmd := config.Commands["javascript"].Executable
+	switches := config.Commands["javascript"].Switches
+	toolOpts := config.Commands["javascript"].Options
 	canonical := false // Generate AST, don't canonicalize
 
 	// JavaScript processing is templatized with tool options

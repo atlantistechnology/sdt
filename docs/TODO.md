@@ -23,6 +23,7 @@
   - [x] SQL
   - [x] Python
   - [x] JavaScript
+  - [ ] JSON
   - [ ] Golang
   - [ ] JSON
   - [ ] Rust

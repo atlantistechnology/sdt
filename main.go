@@ -211,7 +211,7 @@ func getConfig(options types.Options) (types.Config, string) {
 			commands["sql"] = usersql
 		}
 		if userjs, found := config.Commands["javascript"]; found {
-			commands["ecmaScript"] = userjs
+			commands["javascript"] = userjs
 		}
 	}
 
@@ -310,10 +310,10 @@ func main() {
 			config.Commands["sql"].Executable,
 			config.Commands["sql"].Switches,
 		)
-		fmt.Fprintf(os.Stderr, "ecmaScript: %s\n  %s\n  %s\n",
-			config.Commands["ecmaScript"].Executable,
-			config.Commands["ecmaScript"].Switches,
-			config.Commands["ecmaScript"].Options,
+		fmt.Fprintf(os.Stderr, "javascript: %s\n  %s\n  %s\n",
+			config.Commands["javascript"].Executable,
+			config.Commands["javascript"].Switches,
+			config.Commands["javascript"].Options,
 		)
 	}
 }
