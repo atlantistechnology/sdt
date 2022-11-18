@@ -6,8 +6,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/atlantistechnology/sdt/pkg/sql"
 	"github.com/atlantistechnology/sdt/pkg/types"
 )
 
@@ -60,5 +62,82 @@ func TestCorrectFiles(t *testing.T) {
 		if !testHash(file.name, file.digest) {
 			t.Fatalf("Test file %s has been changed from expected body", file.name)
 		}
+	}
+}
+
+func TestNoSemanticDiff(t *testing.T) {
+	// Narrow the options to these test files
+	opts := options
+	opts.Source = file0.name
+	opts.Destination = file1.name
+
+	report := sql.Diff("", opts, config)
+
+	if !strings.Contains(report, "| No semantic differences detected") {
+		t.Fatalf("Failed to recognize semantic equivalence of %s and %s",
+			opts.Source, opts.Destination)
+	}
+}
+
+func TestNoParseTreeDiff(t *testing.T) {
+	// Narrow the options to these test files
+	opts := options
+	opts.Source = file0.name
+	opts.Destination = file1.name
+	opts.Semantic = false
+	opts.Parsetree = true
+
+	report := sql.Diff("", opts, config)
+
+	if !strings.Contains(report, "SQL comparison uses canonicalization") {
+		t.Fatalf("Failed to indicate that SQL analysis does not use parse tree")
+	}
+}
+
+func TestSemanticDiff(t *testing.T) {
+	// Narrow the options to these test files
+	opts := options
+	opts.Source = file0.name
+	opts.Destination = file2.name
+
+	report := sql.Diff("", opts, config)
+
+	if !strings.Contains(report, "{{-num_}}") {
+		t.Fatalf("Failed to recognize colname change `num_orders`/`order_count`")
+	}
+	if !strings.Contains(report, "{{-s}}") {
+		t.Fatalf("Failed to recognize colname change `num_orders`/`order_count`")
+	}
+	if !strings.Contains(report, "{{+_count}}") {
+		t.Fatalf("Failed to recognize colname change `num_orders`/`order_count`")
+	}
+}
+
+func TestParseTreeDiff(t *testing.T) {
+	opts := options
+	opts.Source = file0.name
+	opts.Destination = file2.name
+	opts.Semantic = false
+	opts.Parsetree = true
+
+	report := sql.Diff("", opts, config)
+
+	if !strings.Contains(report, "SQL comparison uses canonicalization") {
+		t.Fatalf("Failed to indicate that SQL analysis does not use parse tree")
+	}
+}
+
+func TestNoSpuriousSemantic(t *testing.T) {
+	// Narrow the options to these test files
+	opts := options
+	opts.Source = file1.name
+	opts.Destination = file2.name
+
+	report := sql.Diff("", opts, config)
+
+	// Lines with added or removed comments not significant for comments only
+	if strings.Contains(report, "-- Number of books") {
+		t.Fatalf("Misrecognized semantic difference in `div()` of %s and %s",
+			opts.Source, opts.Destination)
 	}
 }

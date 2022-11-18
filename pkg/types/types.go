@@ -119,7 +119,7 @@ var Commands = map[string]Command{
 		Switches:   []string{"-e", JsSwitches},
 		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
 	},
-	// A tiny and simple tool (within this project is  used by default. 
+	// A tiny and simple tool (within this project is  used by default.
 	// For an example of using external tool `jq`, see `samples/.sdt.toml`
 	"json": {
 		Executable: "jsonformat",

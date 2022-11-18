@@ -1,8 +1,4 @@
 {
   "food": "pie",
-  "toppings": [
-    "whipped cream",
-    "strawberries",
-    "anchovies"
-  ]
+  "toppings": [ "whipped cream", "strawberries", "anchovies" ]
 }
