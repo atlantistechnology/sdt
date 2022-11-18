@@ -1,36 +1,17 @@
 package json_canonical_test
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"io"
-	"log"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/atlantistechnology/sdt/pkg/json_canonical"
 	"github.com/atlantistechnology/sdt/pkg/types"
+	"github.com/atlantistechnology/sdt/pkg/utils"
 )
 
 type File struct {
 	name   string
 	digest string
-}
-
-func testHash(filename string, digest string) bool {
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	hash := md5.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		log.Fatal(err)
-	}
-	hashValue := hex.EncodeToString(hash.Sum(nil))
-	return hashValue == digest
 }
 
 var options = types.Options{
@@ -73,7 +54,7 @@ func TestCorrectFiles(t *testing.T) {
 	// then make sure that these differences are judged semantically unimportant
 	files := []File{file0, file1, file2, file3, file4, file5}
 	for _, file := range files {
-		if !testHash(file.name, file.digest) {
+		if !utils.VerifyHash(file.name, file.digest) {
 			t.Fatalf("Test file %s has been changed from expected body", file.name)
 		}
 	}
