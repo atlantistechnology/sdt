@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/atlantistechnology/sdt/pkg/javascript"
+	"github.com/atlantistechnology/sdt/pkg/json_canonical"
 	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
@@ -53,6 +54,8 @@ func CompareFileType(
 		diffColor.Println(javascript.Diff(filename, options, config))
 	case ".es6":
 		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".json":
+		diffColor.Println(json_canonical.Diff(filename, options, config))
 	case ".go":
 		// TODO: Need to investigate AST tools
 		diffColor.Println("| Comparison with Golang syntax tree or canonicalization")

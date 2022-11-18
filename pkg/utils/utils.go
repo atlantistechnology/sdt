@@ -303,8 +303,9 @@ func ColorDiff(
 			*reStart, *reEnd, *reBraceOnly, *rePunct, *reBlankln)
 	}
 
-	buff.WriteString("Comparison of parse trees (HEAD -> Current)\n")
+	buff.WriteString("Comparison of parse trees or canonical format\n")
 
+	changed := false
 	for _, diff := range diffs {
 		text := diff.Text
 		for _, transform := range transforms {
@@ -313,10 +314,12 @@ func ColorDiff(
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
+			changed = true
 			buff.WriteString(highlights.Add)
 			buff.WriteString(text)
 			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffDelete:
+			changed = true
 			buff.WriteString(highlights.Del)
 			buff.WriteString(text)
 			buff.WriteString(highlights.Clear)
@@ -326,14 +329,11 @@ func ColorDiff(
 			buff.WriteString(text)
 		}
 	}
-
-	report := BufferToDiff(buff, false, dumbterm)
-	if dumbterm {
-		// For dumb terminal/CI=true, do some cleanup
-		reCleanupDumbterm := regexp.MustCompile(`{{[+_-]}}`)
-		report = reCleanupDumbterm.ReplaceAllString(report, "")
+	if changed {
+		return BufferToDiff(buff, false, dumbterm)
 	}
-	return report
+
+	return "| No semantic differences detected"
 }
 
 func changedGitSegments(

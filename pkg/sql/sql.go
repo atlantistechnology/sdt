@@ -49,7 +49,7 @@ func colorDiff(
 			if !reWhiteSpace.MatchString(text) {
 				changed = true
 			}
-			buff.WriteString(highlights.Add)
+			buff.WriteString(highlights.Del)
 			buff.WriteString(text)
 			buff.WriteString(highlights.Clear)
 		case diffmatchpatch.DiffEqual:

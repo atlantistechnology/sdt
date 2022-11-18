@@ -175,6 +175,11 @@ the files being analyzed as a specific ECMAScript version, see the option
 `ecmaVersion` that can be configured in `.sdt.toml` and is discussed in the
 sample version of that file.
 
+## JSON
+
+TODO.  JSON is supported by the internal Go library `json` which will perform
+canonicalized mashalling.
+
 ## Golang
 
 TODO
