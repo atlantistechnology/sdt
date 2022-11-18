@@ -18,4 +18,4 @@ jobs:
           go-version: 1.19
 
       - name: Test
-        run: go test -v pkg/sql/json_canonical_test.go
+        run: go test -v pkg/json_canonical/json_canonical_test.go
