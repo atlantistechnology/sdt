@@ -1,10 +1,6 @@
 package json_canonical
 
 import (
-	"bytes"
-	"json"
-	"regexp"
-
 	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/atlantistechnology/sdt/pkg/types"
@@ -18,16 +14,6 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	jsonCmd := config.Commands["json"].Executable
 	switches := config.Commands["json"].Switches
 	canonical := true // Canonicalize rather than use parse tree
-
-	// When the built-in canonicalization is used, we always treat the
-	// comparison as between two local (temporary) files
-	if jsonCmd == "BUILT-IN" {
-		file1, file2 := createCanonical(filename, options)
-		options.Source = file1
-		options.Destination = file1
-		jsonCmd = "cat"
-		filename = ""
-	}
 
 	if filename == "" {
 		//-- Comparison of two local files
@@ -53,7 +39,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	if options.Semantic {
-		return utils.colorDiff(dmp, diffs, options.Dumbterm)
+		return utils.ColorDiff(dmp, diffs, types.JSON, options.Dumbterm)
 	}
 
 	return "| No diff type specified"

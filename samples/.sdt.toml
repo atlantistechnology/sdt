@@ -24,7 +24,7 @@ glob = "*"
     executable = "python"
     switches = [ "-m", "ast", "-a" ]
 
-[commands.python_old]
+[commands.python-old]
     # Unfortunately, Python <= 3.8 does not support the direct command-line
     # use of the `ast` module.  A somewhat ugly command line—and an equally
     # unattractive parse tree—can be obtained with the following.

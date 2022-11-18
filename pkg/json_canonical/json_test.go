@@ -1,4 +1,4 @@
-package sql_test
+package json_test
 
 import (
 	"crypto/md5"

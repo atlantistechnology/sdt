@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	//"github.com/mitchellh/copystructure"
 
 	"github.com/atlantistechnology/sdt/pkg/types"
 	"github.com/atlantistechnology/sdt/pkg/utils"
@@ -213,6 +212,9 @@ func getConfig(options types.Options) (types.Config, string) {
 		if userjs, found := config.Commands["javascript"]; found {
 			commands["javascript"] = userjs
 		}
+		if userjson, found := config.Commands["json"]; found {
+			commands["json"] = userjson
+		}
 	}
 
 	// If no glob in either switches or config file, set pattern
@@ -288,6 +290,7 @@ func main() {
 	}
 
 	if options.Verbose {
+		fmt.Fprintf(os.Stderr, "---\n")
 		fmt.Fprintf(os.Stderr, "Description: %s\n", config.Description)
 		fmt.Fprintf(os.Stderr, "Config: %s\n", cfgMessage)
 		fmt.Fprintf(os.Stderr, "status: %t\n", options.Status)
@@ -314,6 +317,10 @@ func main() {
 			config.Commands["javascript"].Executable,
 			config.Commands["javascript"].Switches,
 			config.Commands["javascript"].Options,
+		)
+		fmt.Fprintf(os.Stderr, "JSON: %s %s\n",
+			config.Commands["json"].Executable,
+			config.Commands["json"].Switches,
 		)
 	}
 }

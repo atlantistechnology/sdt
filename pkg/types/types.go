@@ -72,13 +72,14 @@ var PlainASCII Highlights = Highlights{
 	Neutral: "",
 }
 
-// Keep "enum" of types of parse trees we can handle here (<=256 for now)
+// Create "enum" of filetypes we can handle (<=256 langs for now)
 type ParseType uint8
 
 const (
 	Ruby ParseType = iota
 	Python
 	JavaScript
+	JSON
 	Golang
 	SomeOtherLanguage
 )
@@ -118,11 +119,11 @@ var Commands = map[string]Command{
 		Switches:   []string{"-e", JsSwitches},
 		Options:    `{sourceType: "module", ecmaVersion: "latest"}`,
 	},
-	// The Go standard package `json` is used by default. For an example of
-	// using external tool `jq`, see the example in `samples/.sdt.toml`
+	// A tiny and simple tool (within this project is  used by default. 
+	// For an example of using external tool `jq`, see `samples/.sdt.toml`
 	"json": {
-		Executable: "BUILT-IN",
+		Executable: "jsonformat",
 		Switches:   []string{},
-		Options: "",
+		Options:    "",
 	},
 }
