@@ -5,6 +5,7 @@ yarn.lock
 .**.swp
 .**.swo
 bin/*/*
+dist/*/*
 /.sdt.toml     
 
 # If you prefer the allow list template instead of the deny list, 

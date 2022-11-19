@@ -1,37 +1,115 @@
 # Semantic Diff Tool (sdt)
 
-The command-line tool `sdt` compares source files to identify which changes 
-create semantic differences in the program operation, and specifically to 
-exclude many changes which cannot be *functionally important* to the operation
-of a program or library.
+The command-line tool `sdt` compares source files to identify which
+changes create semantic differences in the program operation, and
+specifically to exclude many changes which cannot be *functionally
+important* to the operation of a program or library.
 
-Use of `sdt` will allow code reviewers or submitters to assure that 
+Use of `sdt` will allow code reviewers or submitters to assure that
 modifications made to improve stylistic formatting of the code—whether
 made by hand or using code-formatting tools—does not modify the underlying
 *meaning* of the code.
 
 As designed, the tool is much more likely to produce false positives for
-the presence of semantic changes than false negatives.  That is to say, `sdt`
-might indicate that a certain segment of the diff between versions is *likely*
-to contain a semantic difference in code, but upon human examination, a developer
-might decide that no actual behavior will change (or, of course, she might 
-decide that the change in code behavior is a desired change).
+the presence of semantic changes than false negatives.  That is to say,
+`sdt` might indicate that a certain segment of the diff between versions
+is *likely* to contain a semantic difference in code, but upon human
+examination, a developer might decide that no actual behavior will change
+(or, of course, she might decide that the change in code behavior is a
+desired change).
 
-It is unlikely that `sdt` will identify an overall file change, or any change 
-to a particular segment of a diff as semantically irrelevant where that change
-actually does change behavior.  However, this tool provides NO WARRANTY, and
-it remains up to your human developers and your CI/CD process to make final
-decisions on whether to accept a given change.
+It is unlikely that `sdt` will identify an overall file change, or any
+change to a particular segment of a diff as semantically irrelevant where
+that change actually does change behavior.  However, this tool provides NO
+WARRANTY, and it remains up to your human developers and your CI/CD
+process to make final decisions on whether to accept code changes.
 
-## Future plans
+## Installation
 
-It would be nice to integrate `sdt` as a git subcommand, which should be
-straightforward.
+If the Go language is installed on your system, you may install `sdt` by
+cloning this repository, and installing the tool using `go install ./...`.
+For example:
 
-It would also be nice to allow `sdt` to be used as an integration or extension 
-to GitHub or other collaborative development services (Bitbucket, GitLab, etc) 
-such that views of pull requests could be accompanied by the analysis `sdt` 
-provides.
+```bash
+% git clone https://github.com/atlantistechnology/sdt.git
+% cd sdt
+% go install ./...
+```
+
+These commands will install both `sdt` itself and also the small support
+tool `jsonformat` that may be used to evaluate changed JSON files.
+Additional similar tools are likely to be added to this repository
+as new languages are supported.
+
+However, you may also simply download pre-built binaries for all available
+Go cross-compilation targets directly to your system path.  For example,
+on a Linux operating system and an AMD64 architecture, you might download
+with:
+
+```bash
+% sudo curl https://atlantistech.com/sdt/linux/amd64/sdt \
+    > /usr/local/bin/sdt
+% sudo curl https://atlantistech.com/sdt/linux/amd64/jsonformat \
+    > /usr/local/bin/jsonformat
+% sudo chmod a+x /usr/local/bin/sdt /usr/local/bin/jsonformat
+```
+
+The extra tool `jsonformat` is not needed for users who prefer to use the
+much more powerful [`jq`](https://stedolan.github.io/jq/) in their
+`.sdt.toml` configuration.
+
+The separate step of setting the "executable bit" is probably not needed,
+but does not harm.  If you are installing to a location that only needs
+user permission, the `sudo` is not necessary.
+
+## Integrations
+
+### Subcommand of git
+
+You may wish to use `sdt` as a `git` subcommand.  To do so, you can create
+an alias under either locally within `<repo>/.git/config` or globally within
+`$HOME/.gitconfig`, depending on which better suits your workflow.
+
+A straightforward and useful alias can provide something akin to an
+enhanced `git diff`.  This alias will either compare current files to the
+`HEAD` of the working branch, compare current files to another branch, or
+compare to branches/revisions to each other.  For example:
+
+```bash
+% git sdt
+INFO: Comparing HEAD to current changes on-disk
+Changes not staged for commit:
+    modified:   .gitignore
+| No available semantic analyzer for this format
+    modified:   README.md
+| No available semantic analyzer for this format
+```
+
+```bash
+% git sdt f7f6b934 ruby-samples
+INFO: Comparing branches/revisions f7f6b934: to ruby-samples:
+Changes between branches/revisions:
+    samples/simple-filter.rb
+| Segments with likely semantic changes
+| @@ -3,6 +3,4 @@
+|    items.to_a.select {|item| item % 5 == 0}
+|  end
+|
+| -puts mod5? 1..50
+| -puts mod5? 1..101
+| -
+| +puts mod5? 1..100
+```
+
+The alias for this behavior is:
+
+```toml
+[alias]
+    sdt = "!f() { \
+        if [ -z \"$1\" ]; then A=''; else A=\"--src $1:\"; fi; \
+        if [ -z \"$2\" ]; then B=''; else B=\"--dst $2:\"; fi; \
+        sdt semantic $A $B; }; f"
+```
 
 ## Related tools
 
