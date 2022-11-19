@@ -7,9 +7,17 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - id: pr
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Run SDT on the changes
+        id: pr
         run: |
-          changes=$(sdt semantic -A HEAD~1: -B HEAD:)
+          changes=$(go run cmd/sdt/main.go  semantic -A "HEAD~1:" -B "HEAD:")
           echo "$changes" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
