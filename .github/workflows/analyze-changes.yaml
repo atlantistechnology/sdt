@@ -14,39 +14,6 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Get branch names
-        uses: tj-actions/branch-names@v2.1
-        id: branch-names
-      
-      - name: Current branch name
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "${{ steps.branch-name.outputs.current_branch }}"
-        # Outputs: "feature/test" current PR branch.
-      
-      - name: Current branch name
-        if: github.event_name == 'push'
-        run: |
-          echo "${{ steps.branch-name.outputs.current_branch }}"
-        # Outputs: "main" the default branch that triggered the push event.
-      
-      - name: Get Ref brach name
-        run: |
-          echo "${{ steps.branch-name.outputs.ref_branch }}"
-        #  Outputs: "main" for non PR branches | "1/merge" for a PR branch
-
-      - name: Get Head Ref branch name
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "${{ steps.branch-name.outputs.head_ref_branch }}"
-        # Outputs: "feature/test" current PR branch.
-
-      - name: Get Base Ref branch name
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "${{ steps.branch-name.outputs.base_ref_branch }}"
-        # Outputs: "main" for main <- PR branch.   
-
       - name: Run SDT on the changes
         id: pr
         run: |
