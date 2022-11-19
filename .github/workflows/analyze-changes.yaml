@@ -14,7 +14,7 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Run SDT on the changes
+      - name: Run Semantic Diff Tool on the changes
         id: pr
         run: |
           changes=$(go run cmd/sdt/main.go semantic)
@@ -24,5 +24,5 @@ jobs:
 
       - uses: mshick/add-pr-comment@v2
         with:
-          message: ${{ steps.pr.outputs.changes }}
+          message: ${{ steps.pr.outputs }}
 
