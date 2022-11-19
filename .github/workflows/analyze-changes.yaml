@@ -17,12 +17,13 @@ jobs:
       - name: Run Semantic Diff Tool on the changes
         id: pr
         run: |
-          changes=$(go run cmd/sdt/main.go semantic)
+          changes=$(go run cmd/sdt/main.go semantic -A ${{ github.event.pull_request.head.sha }}:)
           echo "$changes" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: mshick/add-pr-comment@v2
         with:
-          message: ${{ steps.pr.outputs }}
+          message: ${{ steps.pr.outputs.changes }}
 
+            
