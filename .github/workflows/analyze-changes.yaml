@@ -17,7 +17,7 @@ jobs:
       - name: Run Semantic Diff Tool on the changes
         id: pr
         run: |
-          changes=$(go run cmd/sdt/main.go semantic -A ${{ github.event.pull_request.head.sha }}:)
+          changes=$(go run cmd/sdt/main.go semantic -A $(git rev-parse HEAD~1):)
           echo "$changes" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
