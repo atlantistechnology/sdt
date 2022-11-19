@@ -2,7 +2,10 @@ package utils
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -498,4 +501,19 @@ func RevisionToCurrentTree(
 	}
 
 	return headTree, currentTree
+}
+
+func VerifyHash(filename string, digest string) bool {
+	file, err := os.Open(filename)
+	if err != nil {
+		Fail("%s", err)
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		Fail("%s", err)
+	}
+	hashValue := hex.EncodeToString(hash.Sum(nil))
+	return hashValue == digest
 }
