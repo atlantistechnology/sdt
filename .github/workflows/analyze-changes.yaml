@@ -1,3 +1,5 @@
+name: Semantic Diff Tool analysis in PR comment
+
 on:
   pull_request:
 
@@ -14,12 +16,12 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Run Semantic Diff Tool on the changes
+      - name: Find the revision to compare to
         id: pr
         run: |
-          echo "The full log as seen by workflow"
-          git log
-          changes=$(go run cmd/sdt/main.go semantic -A $(git rev-parse main):)
+          echo "GH Action sees only a partial revision tree"
+          rev=$(git log -n1 | grep Merge | sed 's/^.* into //')
+          changes=$(go run cmd/sdt/main.go semantic -A ${rev}:)
           echo "$changes" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
