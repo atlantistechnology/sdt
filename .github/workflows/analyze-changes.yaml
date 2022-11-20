@@ -23,7 +23,7 @@ jobs:
           git log
           rev=$(git log -n1 | grep Merge | sed 's/ into .*$//;s/^ *Merge //')
           echo $rev
-          status=$(go run cmd/sdt/main.go semantic -A ${rev}:))
+          status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
           echo "$status" | tee $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
