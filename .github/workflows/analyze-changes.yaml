@@ -20,6 +20,7 @@ jobs:
         id: pr
         run: |
           echo "GH Action sees only a partial revision tree"
+          git log
           rev=$(git log -n1 | grep Merge | sed 's/^.* into //')
           changes=$(go run cmd/sdt/main.go semantic -A ${rev}:)
           echo "$changes" >>$GITHUB_OUTPUT
