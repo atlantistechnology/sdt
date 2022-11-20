@@ -17,9 +17,10 @@ jobs:
       - name: Run Semantic Diff Tool on the changes
         id: pr
         run: |
+          echo "The full log as seen by workflow"
+          git log
           changes=$(go run cmd/sdt/main.go semantic -A $(git rev-parse main):)
           echo "$changes" >>$GITHUB_OUTPUT
-          git log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
