@@ -22,7 +22,9 @@ jobs:
           echo "GH Action sees only a partial revision tree"
           git log
           rev=$(git log -n1 | grep Merge | sed 's/^.* into //')
-          changes=$(go run cmd/sdt/main.go semantic -A ${rev}:)
+          echo $rev
+          #changes=$(go run cmd/sdt/main.go semantic -A ${rev}:)
+          changes=$(go run cmd/sdt/main.go semantic)
           echo "$changes" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

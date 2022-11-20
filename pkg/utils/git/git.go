@@ -187,8 +187,8 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 			cmdHead := exec.Command("git", "show", options.Destination+filename)
 			body, err = cmdHead.Output()
 			if err != nil {
-				utils.Fail("Unable to retrieve file %s from branch/revision %s",
-					filename, options.Destination)
+				changeFile.Println("    " + filename)
+				continue
 			}
 			tmpfile.Write(body)
 			dst = tmpfile.Name()
@@ -205,8 +205,8 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 			cmdHead := exec.Command("git", "show", options.Source+filename)
 			body, err = cmdHead.Output()
 			if err != nil {
-				utils.Fail("Unable to retrieve file %s from branch/revision %s",
-					filename, options.Source)
+				changeFile.Println("    " + filename)
+				continue
 			}
 			tmpfile.Write(body)
 			src = tmpfile.Name()

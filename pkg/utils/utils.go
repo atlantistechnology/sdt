@@ -476,8 +476,9 @@ func RevisionToCurrentTree(
 	cmdHead := exec.Command("git", "show", options.Source+filename)
 	head, err = cmdHead.Output()
 	if err != nil {
-		Fail("Unable to retrieve file %s from branch/revision %s",
+		Info("Unable to retrieve file %s from branch/revision %s",
 			filename, options.Source)
+		return headTree, currentTree // Empty trees trivially equal
 	}
 
 	tmpfile, err := os.CreateTemp("", "*."+langName)
