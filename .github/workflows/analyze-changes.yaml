@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Find the revision to compare to
+      - name: Find the revision for comparison
         id: pr
         run: |
           echo "GH Action sees only a partial revision tree"
@@ -29,8 +29,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: mshick/add-pr-comment@v2
+      - name: Add a comment to the PR
+        uses: mshick/add-pr-comment@v2
         with:
-          message: ${{ steps.pr.outputs.changes }}
+          changes: ${{ steps.pr.outputs.changes }}
+          message: |
+            **Analysis**
+            $changes
 
             
