@@ -24,17 +24,16 @@ jobs:
           rev=$(git log -n1 | grep Merge | sed 's/^.* into //')
           echo $rev
           #changes=$(go run cmd/sdt/main.go semantic -A ${rev}:)
-          changes=$(go run cmd/sdt/main.go semantic)
-          echo "$changes" >>$GITHUB_OUTPUT
+          status=$(go run cmd/sdt/main.go semantic)
+          echo "$status" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add a comment to the PR
         uses: mshick/add-pr-comment@v2
         with:
-          changes: ${{ steps.pr.outputs.changes }}
           message: |
             **Analysis**
-            $changes
+            ${{ steps.pr.outputs.status }}
 
             
