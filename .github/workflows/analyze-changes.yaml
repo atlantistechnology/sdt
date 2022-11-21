@@ -21,12 +21,14 @@ jobs:
         run: |
           echo "GH Action sees only a partial revision tree"
           git log
-          git diff
-          rev=$(git log -n1 | grep Merge | sed 's/ into .*$//;s/^ *Merge //')
-          echo $rev
+          old=$(git log -n1 | grep Merge | sed 's/ into .*$//;s/^ *Merge //')
+          new=$(git log -n1 | grep Merge | sed 's/^.* into //')
+          echo "Old: $old"
+          echo "New: $new"
           #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
           status=$(go run cmd/sdt/main.go semantic)
           echo "$status" | tee $GITHUB_OUTPUT
+          git diff $old $new
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
