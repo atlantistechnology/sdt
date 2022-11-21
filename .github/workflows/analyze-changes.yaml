@@ -23,8 +23,8 @@ jobs:
         run: |
           echo "GH Action sees only a partial revision tree"
           git log
-          old=$(git log -n1 | grep Merge | head -1 | sed 's/ into .*$//;s/^ *Merge //')
-          new=$(git log -n1 | grep Merge | head -1 | sed 's/^.* into //')
+          old=$(git log -n1 | grep 'Merge.*into.*' | head -1 | sed 's/ into .*$//;s/^ *Merge //')
+          new=$(git log -n1 | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
           echo "Old: $old"
           echo "New: $new"
           #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
