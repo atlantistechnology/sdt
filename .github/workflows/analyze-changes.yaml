@@ -33,7 +33,7 @@ jobs:
           echo "FAILS: fatal: bad object ..."
           echo "Error: Process completed with exit code 128."
           
-          git show $old
+          #git show $old
           git show $new
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
