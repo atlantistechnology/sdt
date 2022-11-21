@@ -26,6 +26,7 @@ jobs:
           status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m 2>&1)
           echo "$status"
           echo "status=$status" >>$GITHUB_OUTPUT
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
