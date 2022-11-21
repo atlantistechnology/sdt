@@ -32,6 +32,9 @@ jobs:
           echo "git diff $old $new"
           echo "FAILS: fatal: bad object ..."
           echo "Error: Process completed with exit code 128."
+          
+          git info $old
+          git info $new
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
