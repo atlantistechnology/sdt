@@ -32,7 +32,8 @@ jobs:
       - name: Add a comment to the PR
         uses: mshick/add-pr-comment@v2
         with:
+          status: ${{ steps.pr.outputs.status }}
           message: |
             **Analysis**
-            ${{ steps.pr.outputs.status }}
+            
             
