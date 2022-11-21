@@ -14,7 +14,8 @@ import (
 func colorDiff(
 	dmp *diffmatchpatch.DiffMatchPatch,
 	diffs []diffmatchpatch.Diff,
-	dumbterm bool) string {
+	dumbterm bool,
+	minimal bool) string {
 
 	var buff bytes.Buffer
 	// Tool `sqlformat` doesn't normalize whitespace completely
@@ -59,7 +60,7 @@ func colorDiff(
 		}
 	}
 	if changed {
-		return utils.BufferToDiff(buff, true, dumbterm)
+		return utils.BufferToDiff(buff, true, dumbterm, minimal)
 	}
 
 	return "| No semantic differences detected"
@@ -97,7 +98,7 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	if options.Semantic {
-		return colorDiff(dmp, diffs, options.Dumbterm)
+		return colorDiff(dmp, diffs, options.Dumbterm, options.Minimal)
 	}
 
 	return "| No diff type specified"

@@ -44,15 +44,15 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	diffs := dmp.DiffMain(headTreeString, currentTreeString, false)
 
 	if options.Parsetree {
-		return utils.ColorDiff(dmp, diffs, types.Python, options.Dumbterm)
+		return utils.ColorDiff(dmp, diffs,
+			types.Python, options.Dumbterm, options.Minimal)
 	}
 
 	if options.Semantic {
 		return utils.SemanticChanges(
 			dmp, diffs, filename,
 			headTree, headTreeString,
-			types.Python, options.Dumbterm,
-		)
+			types.Python, options.Dumbterm, options.Minimal)
 	}
 
 	return "| No diff type specified"

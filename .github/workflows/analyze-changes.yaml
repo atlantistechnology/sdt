@@ -16,14 +16,16 @@ jobs:
         with:
           go-version: 1.19
 
-      - name: Find the revision for comparison
+      - name: Analyze semantic changes
         id: pr
         run: |
           echo "GH Action sees only a partial revision tree"
           git log
+          git diff
           rev=$(git log -n1 | grep Merge | sed 's/ into .*$//;s/^ *Merge //')
           echo $rev
-          status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
+          #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
+          status=$(go run cmd/sdt/main.go semantic)
           echo "$status" | tee $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

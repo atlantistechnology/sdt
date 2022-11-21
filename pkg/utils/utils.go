@@ -95,7 +95,8 @@ func Max[T constraints.Ordered](a, b T) T {
 	return b
 }
 
-func BufferToDiff(buff bytes.Buffer, colorLeft bool, dumbterm bool) string {
+func BufferToDiff(buff bytes.Buffer,
+	colorLeft bool, dumbterm bool, minimal bool) string {
 	if dumbterm {
 		// This can possibly be made slightly less special-case
 		ret := buff.String()
@@ -104,12 +105,45 @@ func BufferToDiff(buff bytes.Buffer, colorLeft bool, dumbterm bool) string {
 		reCleanDumb2 := regexp.MustCompile(`(?Us)({{[+-])([[:space:]]+)(}})`)
 		ret = reCleanDumb2.ReplaceAllString(ret, "$2")
 		rePrepend := regexp.MustCompile(`(?m)^`)
+		// Minimal option only displays lines with changes in them
+		if minimal {
+			var changed []string
+			lines := strings.Split(ret, "\n")
+			for _, line := range lines {
+				if strings.Contains(line, "{{+") || strings.Contains(line, "{{-") {
+					changed = append(changed, line)
+				} else if m, _ := regexp.MatchString(`^(@@|-|\+)`, line); m {
+					changed = append(changed, line)
+				} else if m, _ := regexp.MatchString("^Segments with likely", line); m {
+					changed = append(changed, line)
+				}
+			}
+			ret = strings.Join(changed, "\n")
+		}
 		ret = rePrepend.ReplaceAllString(ret,
 			types.Colors.Header+"| "+types.Colors.Clear)
 		return ret
 	}
 
 	ret := buff.String()
+	if minimal {
+		add := types.Colors.Add
+		del := types.Colors.Del
+		var changed []string
+		lines := strings.Split(ret, "\n")
+		// A bit magical to match on expected ANSI codes at line starts
+		for _, line := range lines {
+			if strings.Contains(line, add) || strings.Contains(line, del) {
+				changed = append(changed, line)
+			} else if m, _ := regexp.MatchString(`^..3.m(@@|-|\+)`, line); m {
+				changed = append(changed, line)
+			} else if m, _ := regexp.MatchString("^..33mSegments with likely", line); m {
+				changed = append(changed, line)
+			}
+		}
+		ret = strings.Join(changed, "\n")
+	}
+
 	rePrepend := regexp.MustCompile(`(?m)^`)
 	if colorLeft {
 		colorPipe := types.Colors.Header + "| " + types.Colors.Clear
@@ -127,7 +161,8 @@ func SemanticChanges(
 	headTree []byte,
 	headTreeString string,
 	parseType types.ParseType,
-	dumbterm bool) string {
+	dumbterm bool,
+	minimal bool) string {
 
 	var gitDiff []byte
 	var err error
@@ -261,7 +296,8 @@ func SemanticChanges(
 	}
 
 	if len(ranges) > 0 {
-		changedSegments := changedGitSegments(gitDiff, diffLines, dumbterm)
+		changedSegments := changedGitSegments(
+			gitDiff, diffLines, dumbterm, minimal)
 		return changedSegments
 	} else {
 		return "| No semantic differences detected"
@@ -273,7 +309,8 @@ func ColorDiff(
 	dmp *diffmatchpatch.DiffMatchPatch,
 	diffs []diffmatchpatch.Diff,
 	parseType types.ParseType,
-	dumbterm bool) string {
+	dumbterm bool,
+	minimal bool) string {
 
 	var highlights types.Highlights
 	if dumbterm {
@@ -333,7 +370,7 @@ func ColorDiff(
 		}
 	}
 	if changed {
-		return BufferToDiff(buff, false, dumbterm)
+		return BufferToDiff(buff, false, dumbterm, minimal)
 	}
 
 	return "| No semantic differences detected"
@@ -342,7 +379,8 @@ func ColorDiff(
 func changedGitSegments(
 	gitDiff []byte,
 	diffLines mapset.Set[uint32],
-	dumbterm bool) string {
+	dumbterm bool,
+	minimal bool) string {
 
 	var highlights types.Highlights
 	if dumbterm {
@@ -405,7 +443,7 @@ func changedGitSegments(
 			buff.WriteString("\n")
 		}
 	}
-	return BufferToDiff(buff, true, dumbterm)
+	return BufferToDiff(buff, true, dumbterm, minimal)
 }
 
 func LocalFileTrees(

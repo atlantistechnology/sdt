@@ -7,6 +7,7 @@ type (
 		Semantic    bool
 		Parsetree   bool
 		Glob        string
+		Minimal     bool
 		Dumbterm    bool
 		Verbose     bool
 		Source      string

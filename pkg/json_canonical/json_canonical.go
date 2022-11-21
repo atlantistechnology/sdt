@@ -39,7 +39,8 @@ func Diff(filename string, options types.Options, config types.Config) string {
 	}
 
 	if options.Semantic {
-		return utils.ColorDiff(dmp, diffs, types.JSON, options.Dumbterm)
+		return utils.ColorDiff(dmp, diffs,
+			types.JSON, options.Dumbterm, options.Minimal)
 	}
 
 	return "| No diff type specified"
