@@ -23,8 +23,9 @@ jobs:
         run: |
           old=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/ into .*$//;s/^ *Merge //')
           new=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
-          SDT=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m 2>&1)
-          echo "SDT=$SDT" >> $GITHUB_ENV
+          status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m 2>&1)
+          echo "$status"
+          echo "status=$status" >>$GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -33,6 +34,5 @@ jobs:
         with:
           message: |
             **Analysis**
-            ${{ env.SDT }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+            ${{ steps.pr.outputs.status }}
             
