@@ -28,15 +28,12 @@ jobs:
           echo "Old: $old"
           echo "New: $new"
           #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
-          status=$(go run cmd/sdt/main.go semantic)
+          status=$(go run cmd/sdt/main.go semantic -A ${old}: -B ${new}:)
           echo "$status" | tee $GITHUB_OUTPUT
-          # Debugging. TODO: remove
-          echo "git diff $old $new"
-          echo "FAILS: fatal: bad object ..."
-          echo "Error: Process completed with exit code 128."
+          
           
           #git show $old
-          git show $new
+          #git show $new
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
