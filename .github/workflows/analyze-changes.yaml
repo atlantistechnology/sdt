@@ -26,7 +26,7 @@ jobs:
           echo "Old: $old"
           echo "New: $new"
           #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
-          status=$(go run cmd/sdt/main.go semantic --minimal 2>&1)
+          status=$(go run cmd/sdt/main.go semantic)
           echo "$status" | tee $GITHUB_OUTPUT
           # Debugging. TODO: remove
           echo "git diff $old $new"
