@@ -135,7 +135,7 @@ func BufferToDiff(buff bytes.Buffer,
 		for _, line := range lines {
 			if strings.Contains(line, add) || strings.Contains(line, del) {
 				changed = append(changed, line)
-			} else if m, _ := regexp.MatchString(`^..3.m(@@|-|\+)`, line); m {
+			} else if m, _ := regexp.MatchString(`^..3[123]m(@@|-|\+)`, line); m {
 				changed = append(changed, line)
 			} else if m, _ := regexp.MatchString("^..33mSegments with likely", line); m {
 				changed = append(changed, line)

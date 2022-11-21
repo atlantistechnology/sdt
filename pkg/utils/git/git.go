@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/gobwas/glob"
 
 	"github.com/atlantistechnology/sdt/pkg/javascript"
 	"github.com/atlantistechnology/sdt/pkg/json_canonical"
@@ -36,6 +37,7 @@ func CompareFileType(
 	config types.Config,
 ) {
 	diffColor := color.New(color.FgYellow)
+
 	switch ext {
 	case ".rb":
 		diffColor.Println(ruby.Diff(filename, options, config))
@@ -125,10 +127,14 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 	reStripNew := regexp.MustCompile(` \(new\) *$`)
 	reStripGone := regexp.MustCompile(` \(gone\) *$`)
 	reMoved := regexp.MustCompile(` => `)
+	pat := glob.MustCompile(options.Glob)
 
 	for _, line := range lines {
 		line = reStripIndicator.ReplaceAllString(line, "")
-		if reStripNew.MatchString(line) {
+		filename := strings.Split(line, " ")[1]
+		if !pat.Match(filename) {
+			continue
+		} else if reStripNew.MatchString(line) {
 			added = append(added, "   "+reStripNew.ReplaceAllString(line, ""))
 		} else if reStripGone.MatchString(line) {
 			gone = append(gone, "   "+reStripGone.ReplaceAllString(line, ""))
@@ -236,6 +242,8 @@ func ParseGitStatus(status []byte, options types.Options, config types.Config) {
 	staged := color.New(color.FgGreen)
 	unstaged := color.New(color.FgRed)
 	untracked := color.New(color.FgCyan)
+	pat := glob.MustCompile(options.Glob)
+	reFname := regexp.MustCompile(`^.*:? +`)
 
 	for i := 0; i < len(lines); i++ {
 		line := string(lines[i])
@@ -252,6 +260,11 @@ func ParseGitStatus(status []byte, options types.Options, config types.Config) {
 
 		if strings.HasPrefix(line, "\t") {
 			fstatus := strings.Replace(line, "\t", "    ", 1)
+			filename := reFname.ReplaceAllString(line, "")
+			if !pat.Match(filename) {
+				continue
+			}
+
 			switch section {
 			case Staged:
 				staged.Println(fstatus)

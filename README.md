@@ -111,15 +111,19 @@ The alias for this behavior is:
         sdt semantic $A $B; }; f"
 ```
 
+### Checking within GitHub Action
+
+TODO
+
 ## Related tools
 
 ### Difftastic
 
-[Difftastic](https://github.com/Wilfred/difftastic) (`difft`) serves a largely
-overlapping purpose to `sdt`.  Difftastic builds on the substantial and
-longstanding work in [tree-sitter](https://github.com/tree-sitter/tree-sitter),
-which is a parser generator tool for which many grammars and interfaces have
-been created.
+[Difftastic](https://github.com/Wilfred/difftastic) (`difft`) serves a
+largely overlapping purpose to `sdt`.  Difftastic builds on the substantial
+and longstanding work in
+[tree-sitter](https://github.com/tree-sitter/tree-sitter), which is a parser
+generator tool for which many grammars and interfaces have been created.
 
 Semantic Diff Tool is much newer and less developed; but `sdt` also takes a
 much more heuristic approach.  That is, `difft` will answer the question
@@ -129,28 +133,28 @@ level?"  In contrast, `sdt` aims to answer the somewhat narrower question
 Specifically, `sdt` is meant to aid code reviewers in excluding merely
 stylistic changes and focus on (likely) functional changes.
 
-This difference is reflected in the different approaches to comparing files the
-two tools take.  Instead of relying on fixed and compiled-in versions of
-parsers as `difft` does, `sdt` dynamically calls external tools (which can be
-whichever specific version of those is used by a project).  
+This difference is reflected in the different approaches to comparing files
+the two tools take.  Instead of relying on fixed and compiled-in versions of
+parsers as `difft` does, `sdt` dynamically calls external tools (which can
+be whichever specific version of those is used by a project).  
 
-As a consequence, using `difft` with a project that, e.g., utilizes Python 3.8
-is difficult to impossible.  At the least, it would require recompiling the
-Rust tool with dependencies on whichever older version of
+As a consequence, using `difft` with a project that, e.g., utilizes Python
+3.8 is difficult to impossible.  At the least, it would require recompiling
+the Rust tool with dependencies on whichever older version of
 [tree-sitter-python](https://github.com/tree-sitter/tree-sitter-python) has
 specifically 3.8-level syntax.  In contrast, `sdt` can be easily and
 dynamically configured to utilize an appropriate Python executable, such as
 `/usr/local/bin/python3.8`.
 
 As an illustration, in the following screenshots, `git diff` shows three
-segments where surface changes were made to a small test file.  The first and
-third—but not the second—segment is semantically meaningful to what the program
-does.  Both `difft` and `sdt` correctly identify this fact; but `sdt` presents
-a display closely modeled on `git diff` itself while `difft` highlights
-*exactly* those characters that represent a change (using a somewhat
-idiosyncratic, but clear, format).  These examples are included as screenshots
-rather than as marked text to preserve the use of color highlighting by all
-three tool.
+segments where surface changes were made to a small test file.  The first
+and third—but not the second—segment is semantically meaningful to what the
+program does.  Both `difft` and `sdt` correctly identify this fact; but
+`sdt` presents a display closely modeled on `git diff` itself while `difft`
+highlights *exactly* those characters that represent a change (using a
+somewhat idiosyncratic, but clear, format).  These examples are included as
+screenshots rather than as marked text to preserve the use of color
+highlighting by all three tool.
 
 ```
 % git diff
@@ -173,43 +177,47 @@ three tool.
 ### AST Explorer
 
 [AST Explorer](https://github.com/fkling/astexplorer) is somewhat similar in
-concept to Difftastic.  It is written in JavaScript, and uses language-native
-parsers to support numerous programming languages.  It does not attempt to
-provide diff'ing, but adding that would be relatively straightforward.  That
-was, in fact, the initial but discarded approach taken by the creator of `sdt`.
+concept to Difftastic.  It is written in JavaScript, and uses
+language-native parsers to support numerous programming languages.  It does
+not attempt to provide diff'ing, but adding that would be relatively
+straightforward.  That was, in fact, the initial but discarded approach
+taken by the creator of `sdt`.
 
 However, after some initial development, I realized that the quality of the
-third-party JS parsers that AST Explorer utilizes are often poor, and fail to
-recognize many commonplace constructs of the languages they respectively
+third-party JS parsers that AST Explorer utilizes are often poor, and fail
+to recognize many commonplace constructs of the languages they respectively
 process.  AST Explorer itself exposes a very nice [web-based front
 end](https://astexplorer.net/), but beyond the sample files of many source
 languages it provides, the tool often fails to parse valid source code.
 
 # Supported languages
 
-Much of the work that Semantic Diff Tool accomplishes is done by means of utilizing
-other tools.  You will need to install those other tools in your development 
-environment separately.  However, this requirement is generally fairly trivial,
-since the tools used are often the underlying runtime engines or compilers for the
-very same programming languages of those files whose changes are analyzed (in 
-other words, the programming languages your project uses).
+Much of the work that Semantic Diff Tool accomplishes is done by means of
+utilizing other tools.  You will need to install those other tools in your
+development environment separately.  However, this requirement is generally
+fairly trivial, since the tools used are often the underlying runtime
+engines or compilers for the very same programming languages of those files
+whose changes are analyzed (in other words, the programming languages your
+project uses).
 
-The configuration file `$HOME/.sdt.toml` allows you to choose specific versions of
-tools and specific switches to use.  This is useful especially if a particular 
-project utilizes a different version of a programming language than the one 
-installed to the default path of a development environment.  Absent an overriding
-configuration, each tool is assumed to reside on your $PATH, and a default 
-collection of flags and switches are used.
+The configuration file `$HOME/.sdt.toml` allows you to choose specific
+versions of tools and specific switches to use.  This is useful especially
+if a particular project utilizes a different version of a programming
+language than the one installed to the default path of a development
+environment.  Absent an overriding configuration, each tool is assumed to
+reside on your $PATH, and a default collection of flags and switches are
+used.
 
-For example, for Ruby files, the default command `ruby --dump=parsetree` is used
-to create an AST of the file being analyzed.  Similarly, for Python files, 
-`python -m ast -a` is used for the same purpose.  Other tools produce canonical 
-representations rather than ASTs, depending on what best serves the needs of
-a particular language (and depending on what tools are available and their 
-quality).  While overriding the configuration between different version of a 
-programming language or tool will *probably* not break the code that performs the
-semantic comparison, not all languages have been tested in all versions (especially
-for versions that will be created in the future and do not yet exist).
+For example, for Ruby files, the default command `ruby --dump=parsetree` is
+used to create an AST of the file being analyzed.  Similarly, for Python
+files, `python -m ast -a` is used for the same purpose.  Other tools produce
+canonical representations rather than ASTs, depending on what best serves
+the needs of a particular language (and depending on what tools are
+available and their quality).  While overriding the configuration between
+different version of a programming language or tool will *probably* not
+break the code that performs the semantic comparison, not all languages have
+been tested in all versions (especially for versions that will be created in
+the future and do not yet exist).
 
 ## Ruby
 
@@ -235,7 +243,8 @@ Requires the tool `sqlformat` (by default).  See:
 
 ## JavaScript
 
-Initial support created.  Supports both `semantic` and `parsetree` subcommands.
+Initial support created.  Supports both `semantic` and `parsetree`
+subcommands.
 
 Requires the `node` interpreter and the library `acorn` (by default). See:
 
@@ -255,8 +264,10 @@ sample version of that file.
 
 ## JSON
 
-TODO.  JSON is supported by the internal Go library `json` which will perform
-canonicalized mashalling.
+JSON is supported by the bundled tool `jsonformat`, which uses the internal
+Go library `json` to canonicalized documents.  The much more sophisticated,
+and commonly installed third-party tool `jq` may also be used, and is
+illustrated within the sample `.sdt.toml`.
 
 ## Golang
 

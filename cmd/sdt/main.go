@@ -87,7 +87,14 @@ func consistentOptions(options types.Options) string {
 		if options.Source != "HEAD:" && options.Destination != "" {
 			return "Specifying source or destination is meaningless without a subcommand"
 		}
+	}
 
+	// Glob may not be used when comparing local files
+	if src != "" && dst != "" &&
+		!strings.HasSuffix(src, ":") &&
+		!strings.HasSuffix(dst, ":") &&
+		options.Glob != "" {
+		return "The --glob option may not be used when comparing two local files"
 	}
 
 	return "HAPPY"
@@ -197,10 +204,6 @@ func getConfig(options types.Options) (types.Config, string) {
 	} else if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		utils.Fail("Unable to read configuration in %s", configFile)
 	} else {
-		// Glob can be defined twice, but command-line rules when different
-		if config.Glob != "" && options.Glob == "" {
-			options.Glob = config.Glob
-		}
 		// .sdt.toml may override default description if present
 		if config.Description != "" {
 			description = config.Description
@@ -223,11 +226,6 @@ func getConfig(options types.Options) (types.Config, string) {
 		}
 	}
 
-	// If no glob in either switches or config file, set pattern
-	if options.Glob == "" {
-		options.Glob = "*"
-	}
-
 	return types.Config{
 		Description: description,
 		Glob:        config.Glob,
@@ -242,6 +240,15 @@ func main() {
 		utils.Fail(checkOpts)
 	}
 	config, cfgMessage := getConfig(options)
+
+	// Glob can be defined twice, but command-line rules when different
+	if options.Glob == "" {
+		if config.Glob != "" {
+			options.Glob = config.Glob
+		} else {
+			options.Glob = "*"
+		}
+	}
 
 	// The call to consistentOptions() has already ruled out cases that are
 	// generally impermissible. This limits the if predicates needed here.
