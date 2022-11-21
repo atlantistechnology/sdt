@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 10
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -27,13 +27,9 @@ jobs:
           new=$(git log -n1 | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
           echo "Old: $old"
           echo "New: $new"
-          #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
           status=$(go run cmd/sdt/main.go semantic -A ${old}: -B ${new}:)
           echo "$status" | tee $GITHUB_OUTPUT
           
-          
-          #git show $old
-          #git show $new
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
