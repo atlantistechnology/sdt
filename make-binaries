@@ -1,0 +1,19 @@
+#!/bin/bash
+for build in $(go tool dist list); do
+    os="$(echo $build | cut -d'/' -f1)"
+    arch="$(echo $build | cut -d'/' -f2)"
+    target="dist/${os}/${arch}"
+
+    if [ "$os" == "windows" ]; then 
+        suffix=".exe" 
+    fi
+    export GOOS=$os 
+    export GOARCH=$arch 
+    go build -ldflags="-s -w" -o ${target}/sdt${suffix} cmd/sdt/main.go 
+    go build -ldflags="-s -w" -o ${target}/jsonformat${suffix} cmd/jsonformat/main.go
+    if [ "$build" != "darwin/amd64" ]; then
+        upx -qqq --best --lzma ${target}/sdt${suffix} &
+        upx -qqq --best --lzma ${target}/jsonformat${suffix} &
+    fi
+done
+

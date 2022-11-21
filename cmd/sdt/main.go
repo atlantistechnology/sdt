@@ -33,6 +33,7 @@ const usage = `Usage of Semantic Diff Tool (sdt):
   semantic, -l    List semantically meaningful changes (default viz HEAD:)
   parsetree, -p   Full syntax tree differences (where applicable)
   -g, --glob      Limit compared files by a glob pattern
+  -m, --minimal   Show only exact changes in semantic diffs
   -v, --verbose   Show verbose output on STDERR
   -d, --dumbterm  Monochrome/pipe compatible output (also env CI=true)
   -h, --help      Display this help screen
@@ -86,7 +87,14 @@ func consistentOptions(options types.Options) string {
 		if options.Source != "HEAD:" && options.Destination != "" {
 			return "Specifying source or destination is meaningless without a subcommand"
 		}
+	}
 
+	// Glob may not be used when comparing local files
+	if src != "" && dst != "" &&
+		!strings.HasSuffix(src, ":") &&
+		!strings.HasSuffix(dst, ":") &&
+		options.Glob != "" {
+		return "The --glob option may not be used when comparing two local files"
 	}
 
 	return "HAPPY"
@@ -117,12 +125,16 @@ func getOptions() types.Options {
 	var semantic bool
 	flag.BoolVar(&semantic, "l", false, "Semantically meaningful changes")
 
+	var parsetree bool
+	flag.BoolVar(&parsetree, "p", false, "Full syntax tree differences")
+
 	var glob string
 	flag.StringVar(&glob, "glob", "", "Limit compared files by a glob pattern")
 	flag.StringVar(&glob, "g", "", "Limit compared files by glob (short flag)")
 
-	var parsetree bool
-	flag.BoolVar(&parsetree, "p", false, "Full syntax tree differences")
+	var minimal bool
+	flag.BoolVar(&minimal, "minimal", false, "Show only exact changes")
+	flag.BoolVar(&minimal, "m", false, "Show only exact changes")
 
 	var verbose bool
 	flag.BoolVar(&verbose, "verbose", false, "Show verbose output on STDERR")
@@ -162,6 +174,7 @@ func getOptions() types.Options {
 		Semantic:    semantic,
 		Parsetree:   parsetree,
 		Glob:        glob,
+		Minimal:     minimal,
 		Verbose:     verbose,
 		Dumbterm:    dumbterm,
 		Source:      src,
@@ -191,10 +204,6 @@ func getConfig(options types.Options) (types.Config, string) {
 	} else if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		utils.Fail("Unable to read configuration in %s", configFile)
 	} else {
-		// Glob can be defined twice, but command-line rules when different
-		if config.Glob != "" && options.Glob == "" {
-			options.Glob = config.Glob
-		}
 		// .sdt.toml may override default description if present
 		if config.Description != "" {
 			description = config.Description
@@ -217,11 +226,6 @@ func getConfig(options types.Options) (types.Config, string) {
 		}
 	}
 
-	// If no glob in either switches or config file, set pattern
-	if options.Glob == "" {
-		options.Glob = "*"
-	}
-
 	return types.Config{
 		Description: description,
 		Glob:        config.Glob,
@@ -236,6 +240,15 @@ func main() {
 		utils.Fail(checkOpts)
 	}
 	config, cfgMessage := getConfig(options)
+
+	// Glob can be defined twice, but command-line rules when different
+	if options.Glob == "" {
+		if config.Glob != "" {
+			options.Glob = config.Glob
+		} else {
+			options.Glob = "*"
+		}
+	}
 
 	// The call to consistentOptions() has already ruled out cases that are
 	// generally impermissible. This limits the if predicates needed here.
@@ -297,6 +310,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "semantic: %t\n", options.Semantic)
 		fmt.Fprintf(os.Stderr, "parsetree: %t\n", options.Parsetree)
 		fmt.Fprintf(os.Stderr, "glob: %s\n", options.Glob)
+		fmt.Fprintf(os.Stderr, "minimal: %t\n", options.Minimal)
 		fmt.Fprintf(os.Stderr, "source: %s\n", options.Source)
 		fmt.Fprintf(os.Stderr, "destination: %s\n", options.Destination)
 		fmt.Fprintf(os.Stderr, "dumbterm: %t\n", options.Dumbterm)

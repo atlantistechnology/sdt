@@ -1,0 +1,40 @@
+name: Semantic Diff Tool analysis in PR comment
+
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Analyze semantic changes
+        id: pr
+        run: |
+          echo "GH Action sees only a partial revision tree"
+          git log
+          git diff
+          rev=$(git log -n1 | grep Merge | sed 's/ into .*$//;s/^ *Merge //')
+          echo $rev
+          #status=$(go run cmd/sdt/main.go semantic -A ${rev}:)
+          status=$(go run cmd/sdt/main.go semantic)
+          echo "$status" | tee $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add a comment to the PR
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            **Analysis**
+            ${{ steps.pr.outputs.status }}
+
+            
