@@ -26,7 +26,7 @@ jobs:
           status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m -d)
           echo "```" >> SDT.analysis # Markdown for comment
           echo "Comparing revision $old to $new" >> SDT.analysis
-          echo "$status" >> tee SDT.analysis
+          echo "$status" >> SDT.analysis
           echo "```" >> SDT.analysis
           echo "$status" # Workflow sees the report also
           
