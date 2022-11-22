@@ -226,6 +226,7 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 			Semantic:    options.Semantic,
 			Parsetree:   options.Parsetree,
 			Glob:        options.Glob,
+			Minimal:     options.Minimal,
 			Verbose:     options.Verbose,
 			Dumbterm:    options.Dumbterm,
 			Source:      src,
