@@ -18,6 +18,16 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Build jsonformat tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/jsonformat" cmd/jsonformat/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
+      - name: Build gotree tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
       - name: Analyze semantic changes
         id: pr
         run: |
