@@ -109,6 +109,8 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 	delFile := color.New(color.FgRed)
 	moveFile := color.New(color.FgMagenta)
 	changeFile := color.New(color.FgCyan)
+
+
 	var changed, added, gone, moved []string
 
 	if len(lines) <= 1 {

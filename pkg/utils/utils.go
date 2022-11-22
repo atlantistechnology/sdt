@@ -121,9 +121,7 @@ func BufferToDiff(buff bytes.Buffer,
 			}
 			ret = strings.Join(changed, "\n")
 		}
-		ret = rePrepend.ReplaceAllString(ret,
-			types.Colors.Header+"| "+types.Colors.Clear)
-		return ret
+		return rePrepend.ReplaceAllString(ret, "| ")
 	}
 
 	ret := buff.String()

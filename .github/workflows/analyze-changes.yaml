@@ -35,7 +35,9 @@ jobs:
           old=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
           status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m -d)
           echo "Comparing revision $old to $new" >> SDT.analysis
+          echo "<pre>" >> SDT.analysis
           echo "$status" >> SDT.analysis
+          echo "</pre>" >> SDT.analysis
           echo "$status" # Workflow sees the report also
           
         env:

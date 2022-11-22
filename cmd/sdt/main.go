@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/BurntSushi/toml"
 
 	"github.com/atlantistechnology/sdt/pkg/types"
@@ -166,6 +167,10 @@ func getOptions() types.Options {
 
 	if os.Getenv("CI") == "true" {
 		dumbterm = true
+	}
+
+	if dumbterm {
+		color.NoColor = true
 	}
 
 	// Create a struct with the command-line configured options
