@@ -1,6 +1,6 @@
 /* The purpose of this small program is to generate an AST for a Golang
  * package.  It provides no options and always requires exactly one filename
- * as an argument.  
+ * as an argument.
  */
 package main
 
@@ -11,7 +11,8 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	//"strconv"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/atlantistechnology/sdt/pkg/utils"
@@ -20,7 +21,7 @@ import (
 func main() {
 	var err error
 	var code []byte
-	raw := os.Getenv("GOTREE_RAW") != "" 
+	raw := os.Getenv("GOTREE_RAW") != ""
 
 	if len(os.Args) != 2 {
 		utils.Fail("`%s` requires exactly one filename argument", os.Args[0])
@@ -56,25 +57,36 @@ func main() {
 		utils.Fail("Unable for to print parsed Golang file %s (%s)", filename, err)
 	}
 
+	lineMark := regexp.MustCompile(
+		`^( *)((` +
+			`Struct|Defer|Map|Interface|Switch|Case|For|Return|Package|Func|If|` +
+			`Assign|Arrow|Go|Begin|Select|Opening|Closing|Star|Colon|Ellipsis|` +
+			`.*Pos|[LR]paren|[LR]brace|[LR]brack` +
+			`): )(.*)`)
 	fmt.Println("SrcLn | Node")
 	lines := strings.Split(buf.String(), "\n")
 	lineno := 0
-	//var n int
 	for _, line := range lines {
 		line = line[utils.Min(8, len(line)):]
 		line = strings.Replace(line, ".  ", "  ", -1)
-		if strings.Contains(line, "Pos: ") {
+
+		// The final parts of the tree are not line-by-line of interest
+		if strings.HasPrefix(line, "Scope: ") ||
+			strings.HasPrefix(line, "Imports: ") ||
+			strings.HasPrefix(line, "Unresolved: ") {
+			break
+		}
+
+		// Several node types announce position
+		if lineMark.MatchString(line) {
 			parts := strings.Split(line, ":")
 			if len(parts) == 3 {
-				fmt.Println("XXX", parts)
+				lineno, _ = strconv.Atoi(strings.Replace(parts[1], " ", "0", -1))
 			}
-			//if n, err = strconv.Atoi(strings.Split(line, ":")[1]); err != nil {
-			//	lineno = n
-			//}
+			justNode := lineMark.ReplaceAllString(line, "$1$2")
+			fmt.Fprintf(os.Stdout, "%05d | %s?\n", lineno, justNode)
+		} else {
+			fmt.Fprintf(os.Stdout, "%05d | %s\n", lineno, line)
 		}
-		fmt.Fprintf(os.Stdout, "%05d  | %s\n", lineno, line)
 	}
-
-
 }
-
