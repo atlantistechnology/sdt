@@ -58,7 +58,8 @@ with:
 
 The extra tool `jsonformat` is not needed for users who prefer to use the
 much more powerful [`jq`](https://stedolan.github.io/jq/) in their
-`.sdt.toml` configuration.
+`.sdt.toml` configuration.  The tool `gotree` produces a somewhat customized
+parse tree, so a different tool is unlikely to be compatible with `sdt`.
 
 The separate step of setting the "executable bit" is probably not needed,
 but does not harm.  If you are installing to a location that only needs

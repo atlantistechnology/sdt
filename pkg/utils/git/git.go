@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gobwas/glob"
 
+	"github.com/atlantistechnology/sdt/pkg/golang"
 	"github.com/atlantistechnology/sdt/pkg/javascript"
 	"github.com/atlantistechnology/sdt/pkg/json_canonical"
 	"github.com/atlantistechnology/sdt/pkg/python"
@@ -59,8 +60,7 @@ func CompareFileType(
 	case ".json":
 		diffColor.Println(json_canonical.Diff(filename, options, config))
 	case ".go":
-		// TODO: Need to investigate AST tools
-		diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
+		diffColor.Println(golang.Diff(filename, options, config))
 	default:
 		diffColor.Println("| No available semantic analyzer for this format")
 	}

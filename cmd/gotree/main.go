@@ -63,6 +63,9 @@ func main() {
 			`Assign|Arrow|Go|Begin|Select|Opening|Closing|Star|Colon|Ellipsis|` +
 			`.*Pos|[LR]paren|[LR]brace|[LR]brack` +
 			`): )(.*)`)
+	reCloseBrace := regexp.MustCompile(`^ *}$`)
+	reEndLineBrace := regexp.MustCompile(`{$`)
+
 	fmt.Println("SrcLn | Node")
 	lines := strings.Split(buf.String(), "\n")
 	lineno := 0
@@ -71,9 +74,9 @@ func main() {
 		line = strings.Replace(line, ".  ", "  ", -1)
 
 		// The final parts of the tree are not line-by-line of interest
-		if strings.HasPrefix(line, "Scope: ") ||
-			strings.HasPrefix(line, "Imports: ") ||
-			strings.HasPrefix(line, "Unresolved: ") {
+		if strings.HasPrefix(line, "  Scope: ") ||
+			strings.HasPrefix(line, "  Imports: ") ||
+			strings.HasPrefix(line, "  Unresolved: ") {
 			break
 		}
 
@@ -83,9 +86,12 @@ func main() {
 			if len(parts) == 3 {
 				lineno, _ = strconv.Atoi(strings.Replace(parts[1], " ", "0", -1))
 			}
-			justNode := lineMark.ReplaceAllString(line, "$1$2")
-			fmt.Fprintf(os.Stdout, "%05d | %s?\n", lineno, justNode)
+			//justNode := lineMark.ReplaceAllString(line, "$1$2")
+			//fmt.Fprintf(os.Stdout, "%05d | %s?\n", lineno, justNode)
+		} else if reCloseBrace.MatchString(line) {
+			// Skip output of lines with only braces, redundant to indent
 		} else {
+			line = reEndLineBrace.ReplaceAllString(line, "")
 			fmt.Fprintf(os.Stdout, "%05d | %s\n", lineno, line)
 		}
 	}
