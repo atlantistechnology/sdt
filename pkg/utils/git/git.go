@@ -47,7 +47,7 @@ func CompareFileType(
 		diffColor.Println(ruby.Diff(filename, options, config))
 	case ".rb":
 		diffColor.Println(ruby.Diff(filename, options, config))
- 	case ".gemspec":
+	case ".gemspec":
 		diffColor.Println(ruby.Diff(filename, options, config))
 	case ".god":
 		diffColor.Println(ruby.Diff(filename, options, config))
@@ -73,7 +73,7 @@ func CompareFileType(
 		diffColor.Println(ruby.Diff(filename, options, config))
 	case ".thor":
 		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".watchr"
+	case ".watchr":
 		diffColor.Println(ruby.Diff(filename, options, config))
 
 	// Python extensions
