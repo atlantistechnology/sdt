@@ -36,10 +36,10 @@ For example:
 % go install ./...
 ```
 
-These commands will install both `sdt` itself and also the small support
-tool `jsonformat` that may be used to evaluate changed JSON files.
-Additional similar tools are likely to be added to this repository
-as new languages are supported.
+These commands will install both `sdt` itself and also the small support tools
+`jsonformat` and `gotree` that may be used to evaluate changed JSON and Golang
+files, respectively.  Additional similar tools are likely to be added to this
+repository as new languages are supported.
 
 However, you may also simply download pre-built binaries for all available
 Go cross-compilation targets directly to your system path.  For example,
@@ -51,12 +51,15 @@ with:
     > /usr/local/bin/sdt
 % sudo curl https://atlantistech.com/sdt/linux/amd64/jsonformat \
     > /usr/local/bin/jsonformat
-% sudo chmod a+x /usr/local/bin/sdt /usr/local/bin/jsonformat
+% sudo curl https://atlantistech.com/sdt/linux/amd64/gotree \
+    > /usr/local/bin/gotree
+% sudo chmod a+x /usr/local/bin/sdt /usr/local/bin/jsonformat /usr/local/bin/gotree
 ```
 
 The extra tool `jsonformat` is not needed for users who prefer to use the
 much more powerful [`jq`](https://stedolan.github.io/jq/) in their
-`.sdt.toml` configuration.
+`.sdt.toml` configuration.  The tool `gotree` produces a somewhat customized
+parse tree, so a different tool is unlikely to be compatible with `sdt`.
 
 The separate step of setting the "executable bit" is probably not needed,
 but does not harm.  If you are installing to a location that only needs
@@ -113,7 +116,53 @@ The alias for this behavior is:
 
 ### Checking within GitHub Action
 
-TODO
+You may wish to have a semantic analysis of changes performed along with every
+PR.  This can be accomplished using a GitHub Action, or in an analogous way on
+other repository management services such as GitLab or BitBucket.  A GitHub
+Action could look like the below (and such is used in the repository for SDT
+itelf).
+
+```yaml
+name: Semantic Diff Tool analysis in PR comment
+
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Analyze semantic changes
+        id: pr
+        run: |
+          old=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/ into .*$//;s/^ *Merge //')
+          new=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
+          status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m -d)
+          echo "```" >> SDT.analysis # Markdown for comment
+          echo "Comparing revision $old to $new" >> SDT.analysis
+          echo "$status" >> SDT.analysis
+          echo "```" >> SDT.analysis
+          echo "$status" # Workflow sees the report also
+          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add a comment to the PR
+        uses: mshick/add-pr-comment@v2
+        with:
+          message-path: SDT.analysis
+```
 
 ## Related tools
 

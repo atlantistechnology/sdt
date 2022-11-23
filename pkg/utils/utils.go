@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/constraints"
@@ -120,9 +121,7 @@ func BufferToDiff(buff bytes.Buffer,
 			}
 			ret = strings.Join(changed, "\n")
 		}
-		ret = rePrepend.ReplaceAllString(ret,
-			types.Colors.Header+"| "+types.Colors.Clear)
-		return ret
+		return rePrepend.ReplaceAllString(ret, "| ")
 	}
 
 	ret := buff.String()
@@ -135,7 +134,7 @@ func BufferToDiff(buff bytes.Buffer,
 		for _, line := range lines {
 			if strings.Contains(line, add) || strings.Contains(line, del) {
 				changed = append(changed, line)
-			} else if m, _ := regexp.MatchString(`^..3[123]m(@@|-|\+)`, line); m {
+			} else if m, _ := regexp.MatchString(`^..3.m(@@|-|\+)`, line); m {
 				changed = append(changed, line)
 			} else if m, _ := regexp.MatchString("^..33mSegments with likely", line); m {
 				changed = append(changed, line)
@@ -279,6 +278,18 @@ func SemanticChanges(
 						diffPositions.Add(posOfInterest)
 					}
 				}
+			case types.Go:
+				// For specialized parse tree format created by `gotree`,
+				// the line number is always a prefix to the diff line
+				line := string(treeLines[parseTreeLineNum])
+				if line[0:5] == "SrcLn" {
+					continue
+				}
+				lineNo, err := strconv.Atoi(line[0:5])
+				if err != nil {
+					Fail("Cannot find line number in %s parse tree: `%s`", filename, line)
+				}
+				diffLines.Add(uint32(lineNo))
 			}
 		}
 	}
@@ -341,6 +352,9 @@ func ColorDiff(
 		reBlankln := regexp.MustCompile(`(?m)^\s*$[\r\n]*`)
 		transforms = append(transforms,
 			*reStart, *reEnd, *reBraceOnly, *rePunct, *reBlankln)
+	case types.Go:
+		// NOTE: `gotree` already produces simplified parse tree
+
 	}
 
 	buff.WriteString("Comparison of parse trees or canonical format\n")

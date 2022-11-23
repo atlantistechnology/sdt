@@ -81,7 +81,7 @@ const (
 	Python
 	JavaScript
 	JSON
-	Golang
+	Go
 	SomeOtherLanguage
 )
 
@@ -124,6 +124,14 @@ var Commands = map[string]Command{
 	// For an example of using external tool `jq`, see `samples/.sdt.toml`
 	"json": {
 		Executable: "jsonformat",
+		Switches:   []string{},
+		Options:    "",
+	},
+	// A small and simple tool within this project called `gotree`.  The tool
+	// modestly customizes the layout of the parse tree, so it is unlikely
+	// that a different tool would produce a format suitable for the analysis
+	"go": {
+		Executable: "gotree",
 		Switches:   []string{},
 		Options:    "",
 	},

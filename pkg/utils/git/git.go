@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gobwas/glob"
 
+	"github.com/atlantistechnology/sdt/pkg/golang"
 	"github.com/atlantistechnology/sdt/pkg/javascript"
 	"github.com/atlantistechnology/sdt/pkg/json_canonical"
 	"github.com/atlantistechnology/sdt/pkg/python"
@@ -59,8 +60,7 @@ func CompareFileType(
 	case ".json":
 		diffColor.Println(json_canonical.Diff(filename, options, config))
 	case ".go":
-		// TODO: Need to investigate AST tools
-		diffColor.Println("| Comparison with Golang syntax tree or canonicalization")
+		diffColor.Println(golang.Diff(filename, options, config))
 	default:
 		diffColor.Println("| No available semantic analyzer for this format")
 	}
@@ -109,6 +109,8 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 	delFile := color.New(color.FgRed)
 	moveFile := color.New(color.FgMagenta)
 	changeFile := color.New(color.FgCyan)
+
+
 	var changed, added, gone, moved []string
 
 	if len(lines) <= 1 {
@@ -224,6 +226,7 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 			Semantic:    options.Semantic,
 			Parsetree:   options.Parsetree,
 			Glob:        options.Glob,
+			Minimal:     options.Minimal,
 			Verbose:     options.Verbose,
 			Dumbterm:    options.Dumbterm,
 			Source:      src,
