@@ -17,8 +17,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/BurntSushi/toml"
+	"github.com/fatih/color"
 
 	"github.com/atlantistechnology/sdt/pkg/types"
 	"github.com/atlantistechnology/sdt/pkg/utils"
