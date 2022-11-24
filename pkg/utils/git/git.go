@@ -39,16 +39,64 @@ func CompareFileType(
 ) {
 	diffColor := color.New(color.FgYellow)
 
-	switch ext {
+	// TODO: detect types in other ways, e.g. `Rakefile` is Ruby
+	// TODO: can acorn be massaged to support TypeScript .ts?
+	switch strings.ToLower(ext) {
+	// Ruby extensions
+	case ".rake":
+		diffColor.Println(ruby.Diff(filename, options, config))
 	case ".rb":
 		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".gemspec":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".god":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".irbrc":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".mspec":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".pluginspec":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".podspec":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".rabl":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".rbuild":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".rbw":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".rbx":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".ru":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".ruby":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".thor":
+		diffColor.Println(ruby.Diff(filename, options, config))
+	case ".watchr":
+		diffColor.Println(ruby.Diff(filename, options, config))
+
+	// Python extensions
 	case ".py":
 		diffColor.Println(python.Diff(filename, options, config))
+	case ".pyw":
+		diffColor.Println(python.Diff(filename, options, config))
+	case ".pyde":
+		diffColor.Println(python.Diff(filename, options, config))
+	case ".pyt": // If you use ESRI, you are a bad person
+		diffColor.Println(python.Diff(filename, options, config))
+
+	// SQL extensions
 	case ".sql":
 		diffColor.Println(sql.Diff(filename, options, config))
+
+	// JavaScript extensions
 	case ".js":
 		diffColor.Println(javascript.Diff(filename, options, config))
-	// Several other extensions are -sometimes- used for JavaScript
+	case ".jsx":
+		diffColor.Println(javascript.Diff(filename, options, config))
+	case ".mdx":
+		diffColor.Println(javascript.Diff(filename, options, config))
 	case ".cjs":
 		diffColor.Println(javascript.Diff(filename, options, config))
 	case ".mjs":
@@ -57,10 +105,15 @@ func CompareFileType(
 		diffColor.Println(javascript.Diff(filename, options, config))
 	case ".es6":
 		diffColor.Println(javascript.Diff(filename, options, config))
+
+	// JSON extensions
 	case ".json":
 		diffColor.Println(json_canonical.Diff(filename, options, config))
+
+	// Golang extensions
 	case ".go":
 		diffColor.Println(golang.Diff(filename, options, config))
+
 	default:
 		diffColor.Println("| No available semantic analyzer for this format")
 	}
@@ -109,8 +162,6 @@ func ParseGitDiffCompact(diff string, options types.Options, config types.Config
 	delFile := color.New(color.FgRed)
 	moveFile := color.New(color.FgMagenta)
 	changeFile := color.New(color.FgCyan)
-
-
 	var changed, added, gone, moved []string
 
 	if len(lines) <= 1 {

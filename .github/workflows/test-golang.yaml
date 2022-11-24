@@ -1,0 +1,26 @@
+name: SDT unit tests for Golang diffs
+
+on: [pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build gotree tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
+      - name: Test
+        run: go test -v pkg/golang/golang_test.go

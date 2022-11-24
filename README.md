@@ -120,7 +120,8 @@ You may wish to have a semantic analysis of changes performed along with every
 PR.  This can be accomplished using a GitHub Action, or in an analogous way on
 other repository management services such as GitLab or BitBucket.  A GitHub
 Action could look like the below (and such is used in the repository for SDT
-itelf).
+itself; note that you won't need the middle steps of building the internal
+tools, generally just the "Analyze semantic changes" step).
 
 ```yaml
 name: Semantic Diff Tool analysis in PR comment
@@ -143,16 +144,26 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Build jsonformat tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/jsonformat" cmd/jsonformat/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
+      - name: Build gotree tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
       - name: Analyze semantic changes
         id: pr
         run: |
-          old=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/ into .*$//;s/^ *Merge //')
-          new=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
+          new=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/ into .*$//;s/^ *Merge //')
+          old=$(git log | grep 'Merge.*into.*' | head -1 | sed 's/^.* into //')
           status=$(go run cmd/sdt/main.go semantic -A "${old}:" -B "${new}:" -m -d)
-          echo "```" >> SDT.analysis # Markdown for comment
           echo "Comparing revision $old to $new" >> SDT.analysis
+          echo "<pre>" >> SDT.analysis
           echo "$status" >> SDT.analysis
-          echo "```" >> SDT.analysis
+          echo "</pre>" >> SDT.analysis
           echo "$status" # Workflow sees the report also
           
         env:
