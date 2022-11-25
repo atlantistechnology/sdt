@@ -18,6 +18,7 @@ import (
 	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
+	"github.com/atlantistechnology/sdt/pkg/treesittter"
 	"github.com/atlantistechnology/sdt/pkg/types"
 	"github.com/atlantistechnology/sdt/pkg/utils"
 )
@@ -114,8 +115,15 @@ func CompareFileType(
 	case ".go":
 		diffColor.Println(golang.Diff(filename, options, config))
 
+	// Try tree-sitter support; if that fails, indicate analysis unavailable
 	default:
-		diffColor.Println("| No available semantic analyzer for this format")
+		// Before giving up on fully custom parsers, try `treesit`
+		results, err := treesitter.Diff(filename, options, config)
+		if err != nil {
+			diffColor.Println("| No available semantic analyzer for this format")
+		} else {
+			diffColor.Println(results)
+		}
 	}
 }
 

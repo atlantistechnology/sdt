@@ -324,14 +324,104 @@ sample version of that file.
 
 ## JSON
 
-JSON is supported by the bundled tool `jsonformat`, which uses the internal
+JSON is supported by the bundled tool `jsonformat` which uses the internal
 Go library `json` to canonicalized documents.  The much more sophisticated,
 and commonly installed third-party tool `jq` may also be used, and is
 illustrated within the sample `.sdt.toml`.
 
 ## Golang
 
-TODO
+Go is supported by the bundled too `gotree` which uses the internal Go
+libraries `go/ast`, `go/parser`, and `go/token`.  The parse tree format
+produced by this tool is designed to make the work SDT does easy, but
+another library is very unlikely to produce a format compatible with the
+assumptions made in evaluating this parse tree.
+
+## Tree-Sitter languages
+
+The widely used parser generator `Tree-sitter` has had a great many grammars
+designed for it.  This tool is used by the Atom editor and by GitHub in its
+code highlighting and analysis facilities.
+
+Installing the command-line tool `tree-sitter` requires building a project
+using Rust's `cargo` tool, and generating each grammar reqires that Node.js
+is installed.  A C compiler is also needed to build the core parser.
+
+There are a number of moving pieces needed to install each supported
+language, but the instructions in [the tree-sitter project
+documentation](https://tree-sitter.github.io/tree-sitter/) are fairly
+straightforward.  If no more specialized language parser is defined in SDT
+specific code, a final effort is made to use the bundled tool `treesit` to
+produce a parse tree for a modified file.
+
+The tool `treesit` wraps a call to `tree-sitter parse`, and merely massages
+the output slightly to produce a format compatible with that produced by
+`gotree`.  This allows SDT to produce semantic analysis for all languages
+having installed tree-sitter grammars.  Available grammars include:
+
+	* Agda
+	* Bash
+	* C
+	* C#
+	* C++
+	* Common Lisp
+	* CSS
+	* CUDA
+	* D
+	* Dockerfile
+	* DOT
+	* Elixir
+	* Elm
+	* Emacs Lisp
+	* Eno
+	* ERB / EJS
+	* Erlang
+	* Fennel
+	* GLSL (OpenGL Shading Language)
+	* Go
+	* Go mod
+	* Hack
+	* Haskell
+	* HCL
+	* HTML
+	* Java
+	* JavaScript
+	* JSON
+	* Julia
+	* Kotlin
+	* Lua
+	* Make
+	* Markdown
+	* Nix
+	* Objective-C
+	* OCaml
+	* Org
+	* Perl
+	* PHP
+	* Protocol Buffers
+	* Python
+	* R
+	* Racket
+	* Ruby
+	* Rust
+	* Scala
+	* S-expressions
+	* Sourcepawn
+	* SPARQL
+	* SQL
+	* Svelte
+	* Swift
+	* SystemRDL
+	* TOML
+	* Turtle
+	* Twig
+	* TypeScript
+	* Verilog
+	* VHDL
+	* Vue
+	* WASM
+	* WGSL WebGPU Shading Language
+	* YAML
 
 ## Others
 

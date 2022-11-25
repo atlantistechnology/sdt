@@ -82,6 +82,7 @@ const (
 	JavaScript
 	JSON
 	Go
+	Treesit
 	SomeOtherLanguage
 )
 
