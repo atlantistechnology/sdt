@@ -1,6 +1,8 @@
 package treesitter
 
 import (
+	"errors"
+	"os/exec"
 	"regexp"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -15,22 +17,42 @@ func simplifyParseTree(parseTree string) string {
 }
 
 func Diff(
-	filename string, 
-	options types.Options, 
+	filename string,
+	options types.Options,
 	config types.Config,
 ) (string, error) {
 	var headTree []byte
 	var currentTree []byte
+	cmd := "treesit"
+	switches := []string{}
+
+	// Check whether `treesit` and `tree-sitter` are available at all
+	installCheck := exec.Command("treesit", "--help")
+	_, err := installCheck.Output()
+	if err != nil {
+		utils.Info("Neither specialized parser nor support utility `treesit` is available")
+		return "", err
+	}
+	installCheck = exec.Command("tree-sitter", "--help")
+	_, err = installCheck.Output()
+	if err != nil {
+		utils.Info("Neither specialized parser nor underlying `tree-sitter` CLI is available")
+		return "", err
+	}
 
 	// Generate AST, don't canonicalize
 	if filename == "" {
 		//-- Comparison of two local files
 		filename, headTree, currentTree = utils.LocalFileTrees(
-			"treesitXXX", []string{}, options, "Tree-Sitter", false)
+			cmd, switches, options, "Tree-Sitter", false)
 	} else {
 		//-- Comparison of a branch/revision to a current file
 		headTree, currentTree = utils.RevisionToCurrentTree(
-			filename, "treesit", []string{}, options, "Tree-Sitter", false)
+			filename, cmd, switches, options, "Tree-Sitter", false)
+	}
+	// If no trees are produced, tree-sitter does not support this language
+	if len(headTree) == 0 || len(currentTree) == 0 {
+		return "", errors.New("Tree-sitter grammar for language unavailable")
 	}
 
 	// Make the trees into slightly simpler string representation

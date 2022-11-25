@@ -290,6 +290,18 @@ func SemanticChanges(
 					Fail("Cannot find line number in %s parse tree: `%s`", filename, line)
 				}
 				diffLines.Add(uint32(lineNo))
+			case types.Treesit:
+				// For specialized parse tree format created by `treesit`,
+				// the line number is always a prefix to the diff line
+				line := string(treeLines[parseTreeLineNum])
+				if line[0:5] == "SrcLn" {
+					continue
+				}
+				lineNo, err := strconv.Atoi(line[0:5])
+				if err != nil {
+					Fail("Cannot find line number in %s parse tree: `%s`", filename, line)
+				}
+				diffLines.Add(uint32(lineNo))
 			}
 		}
 	}
@@ -475,7 +487,10 @@ func LocalFileTrees(
 	cmdHeadTree := exec.Command(cmd, append(switches, options.Source)...)
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {
-		if canonical {
+		if langName == "Tree-Sitter" {
+			Info("No tree-sitter grammar for: %s", filename)
+			return filename, headTree, currentTree
+		} else if canonical {
 			Fail("Could not create canonical %s for %s (using '%s')",
 				langName, options.Source, cmd)
 		} else {
@@ -487,7 +502,10 @@ func LocalFileTrees(
 	cmdCurrentTree := exec.Command(cmd, append(switches, options.Destination)...)
 	currentTree, err = cmdCurrentTree.Output()
 	if err != nil {
-		if canonical {
+		if langName == "Tree-Sitter" {
+			Info("No tree-sitter grammar for: %s", filename)
+			return filename, headTree, currentTree
+		} else if canonical {
 			Fail("Could not create canonical %s for %s (using '%s')",
 				langName, options.Destination, cmd)
 		} else {
@@ -515,7 +533,10 @@ func RevisionToCurrentTree(
 	cmdCurrentTree := exec.Command(cmd, append(switches, filename)...)
 	currentTree, err = cmdCurrentTree.Output()
 	if err != nil {
-		if canonical {
+		if langName == "Tree-Sitter" {
+			Info("No tree-sitter grammar for: %s", filename)
+			return headTree, currentTree
+		} else if canonical {
 			Fail("Could not create canonical %s for %s (using '%s')",
 				langName, filename, cmd)
 		} else {
@@ -544,7 +565,10 @@ func RevisionToCurrentTree(
 	cmdHeadTree := exec.Command(cmd, append(switches, tmpfile.Name())...)
 	headTree, err = cmdHeadTree.Output()
 	if err != nil {
-		if canonical {
+		if langName == "Tree-Sitter" {
+			Info("No tree-sitter grammar for: %s", filename)
+			return headTree, currentTree
+		} else if canonical {
 			Fail("Could not create canonical %s for %s (using '%s')",
 				langName, tmpfile.Name(), cmd)
 		} else {

@@ -18,7 +18,7 @@ import (
 	"github.com/atlantistechnology/sdt/pkg/python"
 	"github.com/atlantistechnology/sdt/pkg/ruby"
 	"github.com/atlantistechnology/sdt/pkg/sql"
-	"github.com/atlantistechnology/sdt/pkg/treesittter"
+	"github.com/atlantistechnology/sdt/pkg/treesitter"
 	"github.com/atlantistechnology/sdt/pkg/types"
 	"github.com/atlantistechnology/sdt/pkg/utils"
 )
