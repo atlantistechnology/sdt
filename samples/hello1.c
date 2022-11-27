@@ -1,3 +1,4 @@
+// +build ignore
 // Simple C program to display "Hello World" (changed comment)
   
 // Header file for input output functions
