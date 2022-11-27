@@ -9,11 +9,16 @@ for build in $(go tool dist list); do
     fi
     export GOOS=$os 
     export GOARCH=$arch 
+    export CGO_ENABLED=0 
     go build -ldflags="-s -w" -o ${target}/sdt${suffix} cmd/sdt/main.go 
     go build -ldflags="-s -w" -o ${target}/jsonformat${suffix} cmd/jsonformat/main.go
-    if [ "$build" != "darwin/amd64" ]; then
+    go build -ldflags="-s -w" -o ${target}/gotree${suffix} cmd/gotree/main.go
+    go build -ldflags="-s -w" -o ${target}/treesit${suffix} cmd/treesit/main.go
+    if [ "$build" != "darwin/arm64" ]; then
         upx -qqq --best --lzma ${target}/sdt${suffix} &
         upx -qqq --best --lzma ${target}/jsonformat${suffix} &
+        upx -qqq --best --lzma ${target}/gotree${suffix} &
+        upx -qqq --best --lzma ${target}/treesit${suffix} &
     fi
 done
 
