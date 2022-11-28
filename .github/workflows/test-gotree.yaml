@@ -30,7 +30,7 @@ jobs:
           
       - name: Where is gotree?
         shell: bash
-        run: echo $PATH && which gotree
+        run: which gotree
       
       - name: Test
         shell: bash
