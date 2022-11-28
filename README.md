@@ -340,12 +340,17 @@ assumptions made in evaluating this parse tree.
 ## Tree-Sitter languages
 
 The widely used parser generator `Tree-sitter` has had a great many grammars
-designed for it.  This tool is used by the Atom editor and by GitHub in its
-code highlighting and analysis facilities.
+designed for it. This tool is used by the Atom editor and by GitHub in its
+code highlighting and analysis facilities. As noted relative to Difftastic, 
+these grammars are all at "some version of the language" rather than allowing
+an arbitrary version to be configued; however, by utilizing this tool, SDT
+gets support for 63 languages (at time of this writing; some grammars more 
+complete than others).
 
 Installing the command-line tool `tree-sitter` requires building a project
-using Rust's `cargo` tool, and generating each grammar reqires that Node.js
-is installed.  A C compiler is also needed to build the core parser.
+using Rust's `cargo` or Node.js' `npm`, and generating each grammar 
+requires that Node.js is installed.  A C compiler is also needed to build 
+the core parser.
 
 There are a number of moving pieces needed to install each supported
 language, but the instructions in [the tree-sitter project
