@@ -34,13 +34,13 @@ jobs:
         run: |
           export JULIA='https://github.com/tree-sitter/tree-sitter-julia.git' &&
           if [ "$RUNNER_OS" == "Linux" ]; then
-			  git clone $JULIA /home/runner/src/tree-sitter-julia &&
-			  cd /home/runner/src/tree-sitter-julia &&
-			  tree-sitter generate
+              git clone $JULIA /home/runner/src/tree-sitter-julia &&
+              cd /home/runner/src/tree-sitter-julia &&
+              tree-sitter generate
          elif [ "$RUNNER_OS" == "macOS" ]; then
-			  git clone $JULIA /Users/runner/src/tree-sitter-julia &&
-			  cd /Users/runner/src/tree-sitter-julia &&
-			  tree-sitter generate
+              git clone $JULIA /Users/runner/src/tree-sitter-julia &&
+              cd /Users/runner/src/tree-sitter-julia &&
+              tree-sitter generate
          else
               echo "$RUNNER_OS not supported"
               exit 1
@@ -50,13 +50,13 @@ jobs:
         run: |
           export C='https://github.com/tree-sitter/tree-sitter-c.git' &&
           if [ "$RUNNER_OS" == "Linux" ]; then
-			  git clone $C /home/runner/src/tree-sitter-c &&
-			  cd /home/runner/src/tree-sitter-c &&
-			  tree-sitter generate
+              git clone $C /home/runner/src/tree-sitter-c &&
+              cd /home/runner/src/tree-sitter-c &&
+              tree-sitter generate
          elif [ "$RUNNER_OS" == "macOS" ]; then
-			  git clone $C /Users/runner/src/tree-sitter-c &&
-			  cd /Users/runner/src/tree-sitter-c &&
-			  tree-sitter generate
+              git clone $C /Users/runner/src/tree-sitter-c &&
+              cd /Users/runner/src/tree-sitter-c &&
+              tree-sitter generate
          else
               echo "$RUNNER_OS not supported"
               exit 1
