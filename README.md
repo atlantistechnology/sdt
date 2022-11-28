@@ -125,6 +125,11 @@ always be needed.  If you want to use tree-sitter grammars and/or custom
 versions of SDT-supported programming languages, you will need to install those
 within the workflow.
 
+Since this is a GH Action for the `sdt` repo itself, we build the underlying
+tool(s) in the workflow. For an unrelated repository, you should simply follow
+the installation instructions, as you would for installation to a local 
+development workstation, and include those steps in the YAML file.
+
 ```yaml
 name: Semantic Diff Tool analysis in PR comment
 
