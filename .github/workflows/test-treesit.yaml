@@ -1,0 +1,48 @@
+name: SDT unit tests for Golang diffs
+
+on: [pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build treesit tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Set up Cargo
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+
+      - name: Install tree-sitter cli
+        run: |
+          cargo install tree-sitter-cli &&
+          tree-sitter dump-languages
+
+      - name: Install Julia grammar for tree-sitter
+        run: |
+          git clone git@github.com:tree-sitter/tree-sitter-julia.git &&
+          cd tree-sitter-julia &&
+          tree-sitter generate
+
+      - name: Test
+        run: go test -v pkg/treesitter/treesitter_test.go -v
