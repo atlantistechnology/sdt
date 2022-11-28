@@ -22,20 +22,9 @@ jobs:
           go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
           echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Set up Cargo
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features
-
-      - name: Install tree-sitter cli
+      - name: Install tree-sitter CLI
         run: |
-          cargo install tree-sitter-cli &&
+          npm install -g tree-sitter-cli &&
           tree-sitter dump-languages
 
       - name: Install Julia grammar for tree-sitter
