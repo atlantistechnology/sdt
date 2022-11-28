@@ -338,7 +338,7 @@ illustrated within the sample `.sdt.toml`.
 
 ## Golang
 
-Go is supported by the bundled too `gotree` which uses the internal Go
+Go is supported by the bundled tool `gotree` which uses the internal Go
 libraries `go/ast`, `go/parser`, and `go/token`.  The parse tree format
 produced by this tool is designed to make the work SDT does easy, but
 another library is very unlikely to produce a format compatible with the
