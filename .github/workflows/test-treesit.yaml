@@ -1,0 +1,51 @@
+name: SDT unit tests for tree-sitter diffs
+
+on: [pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build treesit tool
+        run: |
+          go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
+          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+
+      - name: Install tree-sitter CLI
+        run: |
+          npm install -g tree-sitter-cli &&
+          tree-sitter init-config
+
+      - name: Check included languages (expecting none)
+        run: tree-sitter dump-languages
+
+      - name: Install Julia grammar for tree-sitter
+        run: |
+          export JULIA='https://github.com/tree-sitter/tree-sitter-julia.git' &&
+          git clone $JULIA /home/runner/src/tree-sitter-julia &&
+          cd /home/runner/src/tree-sitter-julia &&
+          tree-sitter generate
+
+      - name: Install C grammar for tree-sitter
+        run: |
+          export C='https://github.com/tree-sitter/tree-sitter-c.git' &&
+          git clone $C /home/runner/src/tree-sitter-c &&
+          cd /home/runner/src/tree-sitter-c &&
+          tree-sitter generate
+
+      - name: Check included languages (expecting Julia and C; but not Haskell)
+        run: tree-sitter dump-languages
+
+      - name: Test
+        run: go test -v pkg/treesitter/treesitter_test.go -v

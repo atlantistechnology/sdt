@@ -1,7 +1,7 @@
 // NOTE: The *expectation* for testing is to have the Julia and C grammars
 // available, but the Haskell grammar unavailable.  However, the tests are
 // meant to pass regardless of whether tree-sitter itself and/or particular
-// grammars are installed.  Different functionality will be tests, of course,
+// grammars are installed.  Different functionality will be tested, of course,
 // if we don't have a mixture of installed/uninstalled grammars; such is the
 // ideal goal of these tests
 
@@ -387,4 +387,3 @@ func TestSemanticDiffHaskell(t *testing.T) {
 		}
 	}
 }
-
