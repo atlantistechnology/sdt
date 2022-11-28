@@ -1,4 +1,4 @@
-name: SDT unit tests for Golang diffs
+name: SDT unit tests for tree-sitter diffs
 
 on: [pull_request]
 
