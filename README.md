@@ -119,8 +119,11 @@ You may wish to have a semantic analysis of changes performed along with every
 PR.  This can be accomplished using a GitHub Action, or in an analogous way on
 other repository management services such as GitLab or BitBucket.  A GitHub
 Action could look like the below (and such is used in the repository for SDT
-itself; note that you won't need the middle steps of building the internal
-tools, generally just the "Analyze semantic changes" step).
+itself; note you only need the middle steps of building the internal tools if 
+your project includes JSON or Go). The "Analyze semantic changes" step will 
+always be needed.  If you want to use tree-sitter grammars and/or custom 
+versions of SDT-supported programming languages, you will need to install those
+within the workflow.
 
 ```yaml
 name: Semantic Diff Tool analysis in PR comment
