@@ -1,0 +1,1 @@
+../../samples/hello2.c

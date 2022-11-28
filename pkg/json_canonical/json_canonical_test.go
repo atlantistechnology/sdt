@@ -26,7 +26,7 @@ var options = types.Options{
 }
 
 var config = types.Config{
-	Description: "Configuration for SQL tests",
+	Description: "Configuration for JSON tests",
 	Glob:        "*",
 	Commands:    types.Commands,
 }

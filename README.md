@@ -37,9 +37,9 @@ For example:
 ```
 
 These commands will install both `sdt` itself and also the small support tools
-`jsonformat` and `gotree` that may be used to evaluate changed JSON and Golang
-files, respectively.  Additional similar tools are likely to be added to this
-repository as new languages are supported.
+`jsonformat`, `gotree`, and `treesit` that may be used to evaluate changed 
+JSON, Golang, and tree-sitter grammar files, respectively.  Additional similar 
+tools are likely to be added to this repository as new languages are supported.
 
 However, you may also simply download pre-built binaries for all available
 Go cross-compilation targets directly to your system path.  For example,
@@ -47,13 +47,12 @@ on a Linux operating system and an AMD64 architecture, you might download
 with:
 
 ```bash
-% sudo curl https://atlantistech.com/sdt/linux/amd64/sdt \
-    > /usr/local/bin/sdt
-% sudo curl https://atlantistech.com/sdt/linux/amd64/jsonformat \
-    > /usr/local/bin/jsonformat
-% sudo curl https://atlantistech.com/sdt/linux/amd64/gotree \
-    > /usr/local/bin/gotree
-% sudo chmod a+x /usr/local/bin/sdt /usr/local/bin/jsonformat /usr/local/bin/gotree
+% sudo curl https://sdt.dev/linux/amd64/sdt > /usr/local/bin/sdt
+% sudo curl https://sdt.dev/linux/amd64/jsonformat > /usr/local/bin/jsonformat
+% sudo curl https://sdt.dev/linux/amd64/gotree > /usr/local/bin/gotree
+% sudo curl https://sdt.dev/linux/amd64/treesit > /usr/local/bin/treesit
+% sudo chmod a+x /usr/local/bin/sdt \
+  /usr/local/bin/jsonformat /usr/local/bin/gotree /usr/local/bin/treesit
 ```
 
 The extra tool `jsonformat` is not needed for users who prefer to use the
@@ -62,8 +61,8 @@ much more powerful [`jq`](https://stedolan.github.io/jq/) in their
 parse tree, so a different tool is unlikely to be compatible with `sdt`.
 
 The separate step of setting the "executable bit" is probably not needed,
-but does not harm.  If you are installing to a location that only needs
-user permission, the `sudo` is not necessary.
+but does no harm.  If you are installing to a PATH that only needs user 
+permission, the `sudo` is not necessary.
 
 ## Integrations
 
@@ -78,7 +77,7 @@ enhanced `git diff`.  This alias will either compare current files to the
 `HEAD` of the working branch, compare current files to another branch, or
 compare to branches/revisions to each other.  For example:
 
-```bash
+```
 % git sdt
 INFO: Comparing HEAD to current changes on-disk
 Changes not staged for commit:
@@ -88,7 +87,7 @@ Changes not staged for commit:
 | No available semantic analyzer for this format
 ```
 
-```bash
+```
 % git sdt f7f6b934 ruby-samples
 INFO: Comparing branches/revisions f7f6b934: to ruby-samples:
 Changes between branches/revisions:
@@ -120,8 +119,16 @@ You may wish to have a semantic analysis of changes performed along with every
 PR.  This can be accomplished using a GitHub Action, or in an analogous way on
 other repository management services such as GitLab or BitBucket.  A GitHub
 Action could look like the below (and such is used in the repository for SDT
-itself; note that you won't need the middle steps of building the internal
-tools, generally just the "Analyze semantic changes" step).
+itself; note you only need the middle steps of building the internal tools if 
+your project includes JSON or Go). The "Analyze semantic changes" step will 
+always be needed.  If you want to use tree-sitter grammars and/or custom 
+versions of SDT-supported programming languages, you will need to install those
+within the workflow.
+
+Since this is a GH Action for the `sdt` repo itself, we build the underlying
+tool(s) in the workflow. For an unrelated repository, you should simply follow
+the installation instructions, as you would for installation to a local 
+development workstation, and include those steps in the YAML file.
 
 ```yaml
 name: Semantic Diff Tool analysis in PR comment
@@ -331,7 +338,7 @@ illustrated within the sample `.sdt.toml`.
 
 ## Golang
 
-Go is supported by the bundled too `gotree` which uses the internal Go
+Go is supported by the bundled tool `gotree` which uses the internal Go
 libraries `go/ast`, `go/parser`, and `go/token`.  The parse tree format
 produced by this tool is designed to make the work SDT does easy, but
 another library is very unlikely to produce a format compatible with the
@@ -340,12 +347,17 @@ assumptions made in evaluating this parse tree.
 ## Tree-Sitter languages
 
 The widely used parser generator `Tree-sitter` has had a great many grammars
-designed for it.  This tool is used by the Atom editor and by GitHub in its
-code highlighting and analysis facilities.
+designed for it. This tool is used by the Atom editor and by GitHub in its
+code highlighting and analysis facilities. As noted relative to Difftastic, 
+these grammars are all at "some version of the language" rather than allowing
+an arbitrary version to be configued; however, by utilizing this tool, SDT
+gets support for 63 languages (at time of this writing; some grammars more 
+complete than others).
 
 Installing the command-line tool `tree-sitter` requires building a project
-using Rust's `cargo` tool, and generating each grammar reqires that Node.js
-is installed.  A C compiler is also needed to build the core parser.
+using Rust's `cargo` or Node.js' `npm`, and generating each grammar 
+requires that Node.js is installed.  A C compiler is also needed to build 
+the core parser.
 
 There are a number of moving pieces needed to install each supported
 language, but the instructions in [the tree-sitter project
