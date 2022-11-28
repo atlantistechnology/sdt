@@ -19,9 +19,10 @@ jobs:
           go-version: 1.19
 
       - name: Build gotree tool
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            go build -o 'C:\Program Files\gotree.exe' cmd/gotree/main.go 
+            go build -o '/c/Users/runneradmin/bin/gotree.exe' cmd/gotree/main.go 
           else
             go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
             echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
@@ -29,7 +30,7 @@ jobs:
           
       - name: Where is gotree?
         shell: bash
-        run: which gotree 
+        run: echo $PATH && which gotree
       
       - name: Test
         shell: bash
