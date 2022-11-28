@@ -37,11 +37,15 @@ jobs:
           cd /home/runner/src/tree-sitter-julia &&
           tree-sitter generate
 
-      - name: Check included languages (expecting Julia)
-        run: tree-sitter dump-languages
+      - name: Install C grammar for tree-sitter
+        run: |
+          export C='https://github.com/tree-sitter/tree-sitter-c.git' &&
+          git clone $C /home/runner/src/tree-sitter-c &&
+          cd /home/runner/src/tree-sitter-c &&
+          tree-sitter generate
 
-      - name: Examine the tree-sitter config
-        run: cat $HOME/.config/tree-sitter/config.json
+      - name: Check included languages (expecting Julia and C; but not Haskell)
+        run: tree-sitter dump-languages
 
       - name: Test
         run: go test -v pkg/treesitter/treesitter_test.go -v
