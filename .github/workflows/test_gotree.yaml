@@ -26,7 +26,9 @@ jobs:
           
       - name: Where is gotree?
         shell: bash
-        run: which gotree
+        run: |
+          export PATH="$PATH:$(which gotree)" &&
+          echo $PATH
       
       - name: Test
         shell: bash
