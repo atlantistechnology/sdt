@@ -77,7 +77,7 @@ enhanced `git diff`.  This alias will either compare current files to the
 `HEAD` of the working branch, compare current files to another branch, or
 compare to branches/revisions to each other.  For example:
 
-```bash
+```
 % git sdt
 INFO: Comparing HEAD to current changes on-disk
 Changes not staged for commit:
@@ -87,7 +87,7 @@ Changes not staged for commit:
 | No available semantic analyzer for this format
 ```
 
-```bash
+```
 % git sdt f7f6b934 ruby-samples
 INFO: Comparing branches/revisions f7f6b934: to ruby-samples:
 Changes between branches/revisions:
