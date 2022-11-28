@@ -27,8 +27,9 @@ jobs:
       - name: Where is gotree?
         shell: bash
         run: |
-          export PATH="$PATH:$(which gotree)" &&
-          echo $PATH
+          cp $(which gotree) /usr/bin/ &&
+          ls -l /usr/bin/gotree
+
       
       - name: Test
         shell: bash
