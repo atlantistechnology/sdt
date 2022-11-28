@@ -25,13 +25,17 @@ jobs:
       - name: Install tree-sitter CLI
         run: |
           npm install -g tree-sitter-cli &&
+          tree-sitter init-config &&
           tree-sitter dump-languages
 
       - name: Install Julia grammar for tree-sitter
         run: |
-          git clone git@github.com:tree-sitter/tree-sitter-julia.git &&
+          git clone https://github.com/tree-sitter/tree-sitter-julia.git &&
           cd tree-sitter-julia &&
           tree-sitter generate
+
+      - name: Examine the tree-sitter config
+        run: cat $HOME/.config/tree-sitter/config.json
 
       - name: Test
         run: go test -v pkg/treesitter/treesitter_test.go -v
