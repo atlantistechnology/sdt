@@ -88,10 +88,11 @@ func TestParser(t *testing.T) {
 	}
 	bodyString := string(body)
 	bodyLines := strings.Split(bodyString, "\n")
-	for i, line := range(bodyLines) {
+	for i, line := range bodyLines {
 		line = strings.TrimRight(line, " ")
 		if line != parsedLines[i] {
-			t.Fatalf("Unexpected parse tree:\nGot:  %s\nWant: %s", line, parsedLines[i])
+			t.Fatalf("Unexpected parse tree:\nGot:  %s\nWant: %s",
+				line, parsedLines[i])
 		}
 	}
 }
