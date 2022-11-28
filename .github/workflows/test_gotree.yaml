@@ -26,4 +26,4 @@ jobs:
 
       - name: Test
         shell: bash
-        run: go test -v cmd/gotree/main.go
+        run: go test -v cmd/gotree/main_test.go
