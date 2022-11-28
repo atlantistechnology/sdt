@@ -37,9 +37,9 @@ For example:
 ```
 
 These commands will install both `sdt` itself and also the small support tools
-`jsonformat` and `gotree` that may be used to evaluate changed JSON and Golang
-files, respectively.  Additional similar tools are likely to be added to this
-repository as new languages are supported.
+`jsonformat`, `gotree`, and `treesit` that may be used to evaluate changed 
+JSON, Golang, and tree-sitter grammar files, respectively.  Additional similar 
+tools are likely to be added to this repository as new languages are supported.
 
 However, you may also simply download pre-built binaries for all available
 Go cross-compilation targets directly to your system path.  For example,
@@ -47,13 +47,12 @@ on a Linux operating system and an AMD64 architecture, you might download
 with:
 
 ```bash
-% sudo curl https://atlantistech.com/sdt/linux/amd64/sdt \
-    > /usr/local/bin/sdt
-% sudo curl https://atlantistech.com/sdt/linux/amd64/jsonformat \
-    > /usr/local/bin/jsonformat
-% sudo curl https://atlantistech.com/sdt/linux/amd64/gotree \
-    > /usr/local/bin/gotree
-% sudo chmod a+x /usr/local/bin/sdt /usr/local/bin/jsonformat /usr/local/bin/gotree
+% sudo curl https://sdt.dev/linux/amd64/sdt > /usr/local/bin/sdt
+% sudo curl https://sdt.dev/linux/amd64/jsonformat > /usr/local/bin/jsonformat
+% sudo curl https://sdt.dev/linux/amd64/gotree > /usr/local/bin/gotree
+% sudo curl https://sdt.dev/linux/amd64/treesit > /usr/local/bin/treesit
+% sudo chmod a+x /usr/local/bin/sdt \
+  /usr/local/bin/jsonformat /usr/local/bin/gotree /usr/local/bin/treesit
 ```
 
 The extra tool `jsonformat` is not needed for users who prefer to use the
@@ -62,8 +61,8 @@ much more powerful [`jq`](https://stedolan.github.io/jq/) in their
 parse tree, so a different tool is unlikely to be compatible with `sdt`.
 
 The separate step of setting the "executable bit" is probably not needed,
-but does not harm.  If you are installing to a location that only needs
-user permission, the `sudo` is not necessary.
+but does no harm.  If you are installing to a PATH that only needs user 
+permission, the `sudo` is not necessary.
 
 ## Integrations
 
