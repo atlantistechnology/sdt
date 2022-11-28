@@ -27,9 +27,11 @@ jobs:
       - name: Where is gotree?
         shell: bash
         run: |
-          cp $(which gotree) /usr/bin/ &&
-          ls -l /usr/bin/gotree
-
+          which gotree &&
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            cp $(which gotree) 'C:\Program Files\gotree.exe' &&
+            ls -l 'C:\Program Files\'
+          fi  
       
       - name: Test
         shell: bash
