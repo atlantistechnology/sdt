@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -25,14 +25,20 @@ jobs:
       - name: Install tree-sitter CLI
         run: |
           npm install -g tree-sitter-cli &&
-          tree-sitter init-config &&
-          tree-sitter dump-languages
+          tree-sitter init-config
+
+      - name: Check included languages (expecting none)
+        run: tree-sitter dump-languages
 
       - name: Install Julia grammar for tree-sitter
         run: |
-          git clone https://github.com/tree-sitter/tree-sitter-julia.git &&
-          cd tree-sitter-julia &&
+          export JULIA='https://github.com/tree-sitter/tree-sitter-julia.git' &&
+          git clone $JULIA /home/runner/src/tree-sitter-julia &&
+          cd /home/runner/src/tree-sitter-julia &&
           tree-sitter generate
+
+      - name: Check included languages (expecting Julia)
+        run: tree-sitter dump-languages
 
       - name: Examine the tree-sitter config
         run: cat $HOME/.config/tree-sitter/config.json
