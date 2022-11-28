@@ -23,7 +23,11 @@ jobs:
         run: |
           go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
           echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
-
+          
+      - name: Where is gotree?
+        shell: bash
+        run: which gotree
+      
       - name: Test
         shell: bash
         run: go test -v cmd/gotree/main_test.go
