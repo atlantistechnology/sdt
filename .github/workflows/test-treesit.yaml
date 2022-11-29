@@ -39,9 +39,7 @@ jobs:
           tree-sitter init-config &&
           if [ "$RUNNER_OS" == "Windows" ]; then
             cp -v /c/npm/prefix/tree-sitter /c/Users/runneradmin/bin/tree-sitter.exe
-            npm list -g
-            npm list
-            cp -rv /c/npm/prefix/node_modules /c/Users/runneradmin/bin/
+            ln -sv /c/npm/prefix/node_modules /c/Users/runneradmin/bin/node_modules
           fi
 
       - name: Where is tree-sitter?
@@ -49,6 +47,7 @@ jobs:
         run: which tree-sitter
       
       - name: Check included languages (expecting none)
+        shell: bash
         run: tree-sitter dump-languages
 
       - name: Install C grammar for tree-sitter
@@ -73,8 +72,10 @@ jobs:
           fi
 
       - name: Check included languages (expecting C)
+        shell: bash
         run: tree-sitter dump-languages
 
       - name: Test
+        shell: bash
         run: go test -v cmd/treesit/main_test.go
 
