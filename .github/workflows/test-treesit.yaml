@@ -76,6 +76,5 @@ jobs:
         run: tree-sitter dump-languages
 
       - name: Test
-        shell: bash
         run: go test -v cmd/treesit/main_test.go
 
