@@ -22,22 +22,22 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            go build -o '/c/Users/runneradmin/bin/gotree.exe' cmd/gotree/main.go 
+            go build -o '/c/Users/runneradmin/bin/treesit.exe' cmd/treesit/main.go 
           else
-            go build -o "$GITHUB_WORKSPACE/gotree" cmd/gotree/main.go &&
+            go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
             echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
           fi
           
+      - name: Where is treesit?
+        shell: bash
+        run: which treesit
+        
       - name: Install tree-sitter CLI
         shell: bash
         run: |
           npm install -g tree-sitter-cli &&
           tree-sitter init-config
 
-      - name: Where is treesit?
-        shell: bash
-        run: which treesit
-        
       - name: Where is tree-sitter?
         shell: bash
         run: which tree-sitter
