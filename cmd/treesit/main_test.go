@@ -58,7 +58,8 @@ func TestGrammar(t *testing.T) {
 		if !strings.Contains(string(body), "No tree-sitter parser") {
 			t.Fatalf("Failed in some manner other than missing grammar: %s", err)
 		}
-		utils.Info("C grammar for tree-sitter missing, install for more complete test")
+		utils.Info("C grammar for tree-sitter missing, install for more complete test\n%s\n%s",
+			body, err)
 		return
 	}
 	if !strings.Contains(string(body), "SrcLn | Node") {

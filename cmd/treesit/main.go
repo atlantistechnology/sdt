@@ -41,7 +41,8 @@ func main() {
 	cmd := exec.Command("tree-sitter", "parse", filename)
 	out, err := cmd.Output()
 	if err != nil {
-		utils.Fail("No tree-sitter parser was found for %s", filename)
+		utils.Fail("No tree-sitter parser was found for %s (%s)",
+			filename, err)
 	}
 
 	// Print the modified parse tree that SDT wishes to work with
