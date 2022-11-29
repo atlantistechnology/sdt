@@ -41,7 +41,7 @@ jobs:
             cp -v /c/npm/prefix/tree-sitter /c/Users/runneradmin/bin/tree-sitter.exe
             npm list -g
             npm list
-            #cp -rv /c/npm/prefix/tree-sitter/node_modules /c/Users/runneradmin/bin/
+            cp -rv /c/npm/prefix/node_modules /c/Users/runneradmin/bin/
           fi
 
       - name: Where is tree-sitter?
