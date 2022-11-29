@@ -37,8 +37,9 @@ jobs:
         run: |
           npm install -g tree-sitter-cli &&
           tree-sitter init-config &&
-          cp /c/npm/prefix/tree-sitter '/c/Users/runneradmin/bin/tree-sitter.exe'
-
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            cp /c/npm/prefix/tree-sitter '/c/Users/runneradmin/bin/tree-sitter.exe'
+          fi
 
       - name: Where is tree-sitter?
         shell: bash
