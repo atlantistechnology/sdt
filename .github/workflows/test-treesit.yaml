@@ -36,8 +36,7 @@ jobs:
         shell: bash
         run: |
           npm install -g tree-sitter-cli &&
-          tree-sitter init-config &&
-          cat  /c/Users/runneradmin/AppData/Roaming/tree-sitter/config.json
+          tree-sitter init-config
 
       - name: Where is tree-sitter?
         shell: bash
@@ -59,7 +58,7 @@ jobs:
               cd /Users/runner/src/tree-sitter-c &&
               tree-sitter generate
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              git clone $C /c/Users/runneradmin/tree-sitter-c &&
+              git clone $C /c/Users/runneradmin/src/tree-sitter-c &&
               cd /c/Users/runneradmin/tree-sitter-c &&
               tree-sitter generate
           else
