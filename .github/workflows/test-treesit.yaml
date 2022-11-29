@@ -34,9 +34,13 @@ jobs:
           npm install -g tree-sitter-cli &&
           tree-sitter init-config
 
-      - name: Where are treesit and tree-sitter?
+      - name: Where is treesit?
         shell: bash
-        run: which treesit && which tree-sitter
+        run: which treesit
+        
+      - name: Where is tree-sitter?
+        shell: bash
+        run: which tree-sitter
       
       - name: Check included languages (expecting none)
         run: tree-sitter dump-languages
