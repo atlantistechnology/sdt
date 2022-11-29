@@ -1,21 +1,22 @@
 - [ ] MORE tests
-  - [x ] Python package
-  - [x ] Ruby package
-  - [ ] JavaScript package
-  - [ ] SQL package
+  - [x] Python package
+  - [x] Ruby package
+  - [x] JavaScript package
+  - [x] SQL package
   - [ ] More coverage in `utils` package (which has grown greatly)
   - [ ] `git` package (how to test?)
-- [ ] Implement the --glob switch
+- [x] Implement the --glob switch
 - [x] Look for `.sdt.toml` in local repo first
 - [ ] Editor Integration:
+  - [x] Git subcommand
   - [ ] VS Code
-  - [ ] vim
-  - [ ] NeoVim
+  - [x] vim
+  - [x] NeoVim
   - [ ] PyCharm/IntelliJ/Fleet/other JetBrains editions
   - [ ] Other editors (Emacs?)
-- [ ] Repo manager integration:
-  - [ ] GH tests on PR
-  - [ ] GitHub
+- [x] Repo manager integration:
+  - [x] GH tests on PR
+  - [x] GitHub
   - [ ] GitLab
   - [ ] BitBucket
 - [ ] Add more language support:
@@ -23,11 +24,12 @@
   - [x] SQL
   - [x] Python
   - [x] JavaScript
-  - [ ] JSON
-  - [ ] Golang
-  - [ ] JSON
-  - [ ] Rust
-  - [ ] C
-  - [ ] C++
-  - [ ] Java
+  - [x] JSON
+  - [x] Golang
+  - [x] JSON
+  - [x] Rust (via tree-sitter)
+  - [x] C (via tree-sitter)
+  - [x] C++ (via tree-sitter)
+  - [x] Java (via tree-sitter)
+  - [x] Julia (via tree-sitter)
   - [ ] ...other?
