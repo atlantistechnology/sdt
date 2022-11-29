@@ -39,7 +39,8 @@ jobs:
           tree-sitter init-config &&
           if [ "$RUNNER_OS" == "Windows" ]; then
             cp -v /c/npm/prefix/tree-sitter /c/Users/runneradmin/bin/tree-sitter.exe
-            cp -rv /c/npm/prefix/tree-sitter/node_modules /c/Users/runneradmin/bin/
+            find /c -name node_modules -type d
+            #cp -rv /c/npm/prefix/tree-sitter/node_modules /c/Users/runneradmin/bin/
           fi
 
       - name: Where is tree-sitter?
