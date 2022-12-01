@@ -77,5 +77,12 @@ jobs:
 
       - name: Test
         shell: bash
-        run: go test -v cmd/treesit/main_test.go
+        run: |
+          # Windows still has weird messages: No tree-sitter parser was found 
+          # for hello0.c (fork/exec C:\Users\runneradmin\bin\tree-sitter.exe: 
+          # This version of %1 is not compatible with the version of Windows 
+          # you're running. Check your computer's system information and then 
+          # contact the software publisher.)
+          # It would be nice to figure this out someday.
+          go test -v cmd/treesit/main_test.go
 
