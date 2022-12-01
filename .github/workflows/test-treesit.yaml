@@ -1,13 +1,14 @@
-name: SDT unit tests for tree-sitter diffs
+name: Test support utility `treesit` 
 
-on: [pull_request]
+on:
+  pull_request:
 
 jobs:
-  test:
+  pr:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -18,19 +19,39 @@ jobs:
           go-version: 1.19
 
       - name: Build treesit tool
+        shell: bash
         run: |
-          go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
-          echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
-
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            go build -o '/c/Users/runneradmin/bin/treesit.exe' cmd/treesit/main.go 
+          else
+            go build -o "$GITHUB_WORKSPACE/treesit" cmd/treesit/main.go &&
+            echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+          fi
+          
+      - name: Where is treesit?
+        shell: bash
+        run: which treesit
+        
       - name: Install tree-sitter CLI
+        shell: bash
         run: |
           npm install -g tree-sitter-cli &&
-          tree-sitter init-config
+          tree-sitter init-config &&
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            cp -v /c/npm/prefix/tree-sitter /c/Users/runneradmin/bin/tree-sitter.exe
+            ln -sv /c/npm/prefix/node_modules /c/Users/runneradmin/bin/node_modules
+          fi
 
+      - name: Where is tree-sitter?
+        shell: bash
+        run: which tree-sitter
+      
       - name: Check included languages (expecting none)
+        shell: bash
         run: tree-sitter dump-languages
 
       - name: Install C grammar for tree-sitter
+        shell: bash
         run: |
           export C="https://github.com/tree-sitter/tree-sitter-c.git" &&
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -41,29 +62,27 @@ jobs:
               git clone $C /Users/runner/src/tree-sitter-c &&
               cd /Users/runner/src/tree-sitter-c &&
               tree-sitter generate
-          else
-              echo "$RUNNER_OS not supported"
-              exit 1
-          fi
-
-      - name: Install Julia grammar for tree-sitter
-        run: |
-          export JULIA="https://github.com/tree-sitter/tree-sitter-julia.git" &&
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              git clone $JULIA /home/runner/src/tree-sitter-julia &&
-              cd /home/runner/src/tree-sitter-julia &&
-              tree-sitter generate
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-              git clone $JULIA /Users/runner/src/tree-sitter-julia &&
-              cd /Users/runner/src/tree-sitter-julia &&
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              git clone $C /c/Users/runneradmin/src/tree-sitter-c &&
+              cd 'C:\Users\runneradmin\src\tree-sitter-c' &&
               tree-sitter generate
           else
               echo "$RUNNER_OS not supported"
               exit 1
           fi
 
-      - name: Check included languages (expecting Julia and C; but not Haskell)
+      - name: Check included languages (expecting C)
+        shell: bash
         run: tree-sitter dump-languages
 
       - name: Test
-        run: go test -v pkg/treesitter/treesitter_test.go -v
+        shell: bash
+        run: |
+          # Windows still has weird messages: No tree-sitter parser was found 
+          # for hello0.c (fork/exec C:\Users\runneradmin\bin\tree-sitter.exe: 
+          # This version of %1 is not compatible with the version of Windows 
+          # you're running. Check your computer's system information and then 
+          # contact the software publisher.)
+          # It would be nice to figure this out someday.
+          go test -v cmd/treesit/main_test.go
+

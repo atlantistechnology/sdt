@@ -1,0 +1,37 @@
+name: Test support utility `jsonformat` 
+
+on:
+  pull_request:
+
+jobs:
+  pr:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build jsonformat tool
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            go build -o '/c/Users/runneradmin/bin/jsonformat.exe' cmd/jsonformat/main.go 
+          else
+            go build -o "$GITHUB_WORKSPACE/jsonformat" cmd/jsonformat/main.go &&
+            echo "$GITHUB_WORKSPACE/" >> $GITHUB_PATH
+          fi
+          
+      - name: Where is jsonformat?
+        shell: bash
+        run: which jsonformat
+      
+      - name: Test
+        shell: bash
+        run: go test -v cmd/jsonformat/main_test.go
