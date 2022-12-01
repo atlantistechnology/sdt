@@ -43,7 +43,7 @@ Changes not staged for commit:
 
 For users wishing to aid in developing SDT, or who simply wish to install
 from source, you may install `sdt` by cloning this repository, and
-installing the tool(s) using `go install ./...`.
+installing the tool(s) using `go install`.
 
 For example:
 
