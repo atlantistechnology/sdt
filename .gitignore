@@ -1,12 +1,15 @@
 Session.vim
-node_modules/*
+**/node_modules/*
 yarn.lock
 **.swp
 .**.swp
 .**.swo
+.sdt.tmp
+sdt.code-workspace
 bin/*/*
 dist/*/*
-/.sdt.toml     
+/.sdt.toml 
+**/.vscode-test
 
 # If you prefer the allow list template instead of the deny list, 
 # see community template:
