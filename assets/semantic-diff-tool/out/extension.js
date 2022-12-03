@@ -29,7 +29,11 @@ function activate(context) {
                 vscode.window.showInformationMessage("Unable to run `sdt` (is it installed?)");
             }
             else {
-                openInUntitled(stdout);
+                openInUntitled(`${Date()}\n` +
+                    `---------------------------------------------------------\n` +
+                    `${stderr.replace(/\u001b\[.*?m/g, '')}` +
+                    `---------------------------------------------------------\n` +
+                    `${stdout}`);
             }
         });
     });
