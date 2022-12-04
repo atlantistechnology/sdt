@@ -19,6 +19,13 @@
         "command": "semantic-diff-tool.sdt",
         "title": "Semantic Diff Tool"
       }
+    ],
+    "keybindings": [
+      {
+          "command": "semantic-diff-tool.sdt",
+          "key": "ctrl+alt+d",
+          "mac": "ctrl+cmd+d"
+      }
     ]
   },
   "scripts": {
