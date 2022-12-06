@@ -2,6 +2,7 @@ package git
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/forsaken628/mapset" // Set of strings
 	"github.com/gobwas/glob"
 
 	"github.com/atlantistechnology/sdt/pkg/golang"
@@ -32,6 +34,54 @@ const (
 	Untracked
 )
 
+var rubyExt = mapset.New(
+	".rb", ".rake", ".gemspec", ".god", ".irbrc", ".mspec", ".pluginspec",
+	".podspec", ".rabl", ".rbuild", ".rbw", ".rbx", ".ru", ".ruby",
+	".thor", ".watchr")
+var pyExt = mapset.New(".py", ".pyw", ".pyde", "pyt")
+var sqlExt = mapset.New(
+	".sql", ".pls", ".bdy", ".ddl", ".fnc", ".pck", ".pkb", ".pks",
+	".pgsql", ".plb", ".plsql", ".prc", ".spc", ".sql", ".tpb", ".tps",
+	".trg", ".vw")
+var jsExt = mapset.New(".js", ".jsx", ".mdx", ".cjs", ".mjs", ".es", ".es6")
+var jsonExt = mapset.New(
+	".json", ".json5", ".4dform", ".4dproject", ".avsc", ".geojson", ".gltf",
+	".har", ".ice", ".json-tmlanguage", ".jsonl", ".mcmeta", ".tfstate",
+	".tfstate.backup", ".topojson", ".webapp", ".webmanifest", ".yy", ".yyp")
+
+// V Programming language is 80% similar to Go; parser "probably" works
+var goExt = mapset.New(".go", ".v")
+
+func FileComparer(ext string) (
+	func(string, types.Options, types.Config) string,
+	string,
+	error,
+) {
+	ext = strings.ToLower(ext)
+
+	if rubyExt.Contains(ext) {
+		return ruby.Diff, "Ruby", nil
+	}
+	if pyExt.Contains(ext) {
+		return python.Diff, "Python", nil
+	}
+	if sqlExt.Contains(ext) {
+		return sql.Diff, "SQL", nil
+	}
+	if jsExt.Contains(ext) {
+		return javascript.Diff, "JavaScript", nil
+	}
+	if jsonExt.Contains(ext) {
+		return json_canonical.Diff, "JSON", nil
+	}
+	if goExt.Contains(ext) {
+		return golang.Diff, "Go", nil
+	}
+	// No built-in differ is available, but tree-sitter might be
+	return nil, "Tree-sitter?",
+		errors.New("No built-in differ for extension" + ext)
+}
+
 func CompareFileType(
 	ext string,
 	filename string,
@@ -39,87 +89,13 @@ func CompareFileType(
 	config types.Config,
 ) {
 	diffColor := color.New(color.FgYellow)
-
-	// TODO: detect types in other ways, e.g. `Rakefile` is Ruby
-	// TODO: can acorn be massaged to support TypeScript .ts?
-	switch strings.ToLower(ext) {
-	// Ruby extensions
-	case ".rake":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".rb":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".gemspec":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".god":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".irbrc":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".mspec":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".pluginspec":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".podspec":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".rabl":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".rbuild":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".rbw":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".rbx":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".ru":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".ruby":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".thor":
-		diffColor.Println(ruby.Diff(filename, options, config))
-	case ".watchr":
-		diffColor.Println(ruby.Diff(filename, options, config))
-
-	// Python extensions
-	case ".py":
-		diffColor.Println(python.Diff(filename, options, config))
-	case ".pyw":
-		diffColor.Println(python.Diff(filename, options, config))
-	case ".pyde":
-		diffColor.Println(python.Diff(filename, options, config))
-	case ".pyt": // If you use ESRI, you are a bad person
-		diffColor.Println(python.Diff(filename, options, config))
-
-	// SQL extensions
-	case ".sql":
-		diffColor.Println(sql.Diff(filename, options, config))
-
-	// JavaScript extensions
-	case ".js":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".jsx":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".mdx":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".cjs":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".mjs":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".es":
-		diffColor.Println(javascript.Diff(filename, options, config))
-	case ".es6":
-		diffColor.Println(javascript.Diff(filename, options, config))
-
-	// JSON extensions
-	case ".json":
-		diffColor.Println(json_canonical.Diff(filename, options, config))
-
-	// Golang extensions
-	case ".go":
-		diffColor.Println(golang.Diff(filename, options, config))
-
-	// Try tree-sitter support; if that fails, indicate analysis unavailable
-	default:
+	differ, _, err := FileComparer(ext)
+	if err == nil {
+		diffColor.Println(differ(filename, options, config))
+	} else {
 		// Before giving up on fully custom parsers, try `treesit`
-		results, err := treesitter.Diff(filename, options, config)
-		if err != nil {
+		results, err2 := treesitter.Diff(filename, options, config)
+		if err2 != nil {
 			diffColor.Println("| No available semantic analyzer for this format")
 		} else {
 			diffColor.Println(results)
