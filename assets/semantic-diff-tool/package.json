@@ -1,0 +1,53 @@
+{
+  "name": "semantic-diff-tool",
+  "displayName": "Semantic Diff Tool",
+  "description": "Identify code changes that can have functional effects between git revisions or local files",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:semantic-diff-tool.sdt"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "semantic-diff-tool.sdt",
+        "title": "Semantic Diff Tool"
+      }
+    ],
+    "keybindings": [
+      {
+          "command": "semantic-diff-tool.sdt",
+          "key": "ctrl+alt+d",
+          "mac": "ctrl+cmd+d"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.73.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.3"
+  },
+  "repository": "https://github.com/atlantistechnology/sdt"
+}
